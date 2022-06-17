@@ -1,0 +1,14 @@
+volumes:
+  db:
+
+services:
+  mongo:
+    image: mongo:latest
+    environment:
+      - MONGO_INITDB_DATABASE = robomania
+      - MONGO_INITDB_ROOT_USERNAME = root
+      - MONGO_INITDB_ROOT_PASSWORD = root
+    volumes:
+      - db:/data/db
+    ports:
+      - 27017:27017
