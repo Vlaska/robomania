@@ -34,10 +34,17 @@ def init_db() -> None:
 
     username = os.getenv('DB_USERNAME')
     password = os.getenv('DB_PASSWORD')
-    auth_db = os.getenv('DB_AUTH_DB')
     host = os.getenv('DB_HOST')
-    port = int(os.getenv('DB_PORT', 27017))
+
+    port = os.getenv('DB_PORT', '')
+    auth_db = os.getenv('DB_AUTH_DB', '')
+
+    if port:
+        port = f':{port}'
+    
+    if auth_db:
+        auth_db = f'{auth_db}/'
 
     client = AsyncIOMotorClient(
-        f"mongodb://{username}:{password}@{host}:{port}/{auth_db}"
+        f"mongodb+srv://{username}:{password}@{host}{port}/{auth_db}?retryWrites=true&w=majority"
     )
