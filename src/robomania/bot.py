@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+import logging
 from dotenv import load_dotenv
 
 import disnake
@@ -21,6 +22,18 @@ bot = commands.Bot(
     test_guilds=[958823316850880512],
     sync_commands_debug=True
 )
+
+
+logger = logging.getLogger('disnake')
+
+
+def init_logger() -> None:
+    logger.setLevel(logging.DEBUG)
+    handler = logging.FileHandler('disnake.log', encoding='utf-8', mode='w')
+    handler.setFormatter(
+        logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s')
+    )
+    logger.addHandler(handler)
 
 
 @bot.event

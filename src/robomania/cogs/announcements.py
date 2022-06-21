@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import io
+import logging
 from pathlib import Path
 from typing import Any, Awaitable, Generator, cast
 from urllib.parse import urlparse
@@ -19,6 +20,9 @@ MAX_IMAGES_PER_MESSAGE = 10
 MAX_TOTAL_SIZE_OF_IMAGES = 8 * 1024
 
 
+logger = logging.getLogger('disnake')
+
+
 class Announcements(commands.Cog):
     fields_to_keep = [
         'timestamp',
@@ -34,10 +38,13 @@ class Announcements(commands.Cog):
     last_checked = datetime.datetime(1, 1, 1)
     target_channels: list[disnake.TextChannel]
     DOWNLOAD_PAGE_LIMIT = 4
+    MIN_DELAY_BETWEEN_CHECKS = datetime.timedelta(minutes=30)
+    _DISABLE_ANNOUNCEMENTS_LOOP = False
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.check_for_announcements.start()
+        if not self._DISABLE_ANNOUNCEMENTS_LOOP:
+            self.check_for_announcements.start()
 
     async def create_collections(self, db: Database) -> None:
         posts = db.posts
@@ -49,12 +56,23 @@ class Announcements(commands.Cog):
     def cog_unload(self) -> None:
         self.check_for_announcements.cancel()
 
+    def enough_time_from_last_check(self) -> bool:
+        current_time = datetime.datetime.now()
+        time_since_last_check = current_time - utils.announcements_last_checked
+
+        return time_since_last_check > self.MIN_DELAY_BETWEEN_CHECKS
+
     # TODO
-    def check_enough_time_from_last_check(self) -> bool:
+    def in_allowed_time_range(self) -> bool:
         pass
 
-    @tasks.loop(seconds=10)  # TODO
+    @tasks.loop(hours=1)  # TODO
     async def check_for_announcements(self) -> None:
+        if not self.enough_time_from_last_check():
+            return
+
+        utils.announcements_last_checked = datetime.datetime.now()
+
         posts = await self.download_facebook_posts()
         # posts.sort(key=lambda x: x['timestamp'])
         new_posts = await self.get_only_new_posts(posts)
@@ -71,7 +89,8 @@ class Announcements(commands.Cog):
             col.posts.insert_many(posts, ordered=False)
         )
 
-    async def get_latest_post_timestamp(self) -> int:
+    @staticmethod
+    async def get_latest_post_timestamp() -> int:
         db = utils.get_db('robomania')
         col = db.posts
 
@@ -94,7 +113,7 @@ class Announcements(commands.Cog):
     ) -> list[dict[str, Any]]:
         latest_timestamp = await self.get_latest_post_timestamp()
 
-        return list(filter(lambda x: x['timestamp'] > latest_timestamp, posts))
+        return sorted(filter(lambda x: x['timestamp'] > latest_timestamp, posts), key=lambda x: x['timestamp'])
 
     @check_for_announcements.before_loop
     async def init(self) -> None:
@@ -110,8 +129,14 @@ class Announcements(commands.Cog):
             self.target_channels.append(self.bot.get_channel(i))
 
     async def download_facebook_posts(self) -> list[dict[str, Any]]:
+        loop = self.bot.loop
         return list(
-            get_posts(self.fanpage_name, page_limit=self.DOWNLOAD_PAGE_LIMIT)
+            await loop.run_in_executor(
+                None,
+                get_posts,
+                self.fanpage_name,
+                page_limit=self.DOWNLOAD_PAGE_LIMIT
+            )
         )
 
     @classmethod
@@ -147,6 +172,9 @@ class Announcements(commands.Cog):
                     out.append((data, image_path.name))
 
         return out
+
+    def reduce_image_size(self, image: io.BytesIO) -> io.BytesIO:
+        pass
 
     # TODO
     def split_text(self, text: str, char_limit: int = 2000) -> list[str]:
