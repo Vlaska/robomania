@@ -3,7 +3,10 @@ from __future__ import annotations
 import datetime
 import io
 import logging
+import math
+import re
 from pathlib import Path
+from textwrap import TextWrapper
 from typing import Any, Awaitable, Generator, cast
 from urllib.parse import urlparse
 
@@ -18,9 +21,12 @@ from . import utils
 
 MAX_IMAGES_PER_MESSAGE = 10
 MAX_TOTAL_SIZE_OF_IMAGES = 8 * 1024
+MAX_CHARACTERS_PER_POST = 2000
 
 
 logger = logging.getLogger('disnake')
+
+space_regex = re.compile(' +')
 
 
 class Announcements(commands.Cog):
@@ -40,6 +46,11 @@ class Announcements(commands.Cog):
     DOWNLOAD_PAGE_LIMIT = 4
     MIN_DELAY_BETWEEN_CHECKS = datetime.timedelta(minutes=30)
     _DISABLE_ANNOUNCEMENTS_LOOP = False
+    wrapper = TextWrapper(
+        MAX_CHARACTERS_PER_POST,
+        expand_tabs=False,
+        replace_whitespace=False
+    )
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -113,7 +124,11 @@ class Announcements(commands.Cog):
     ) -> list[dict[str, Any]]:
         latest_timestamp = await self.get_latest_post_timestamp()
 
-        return sorted(filter(lambda x: x['timestamp'] > latest_timestamp, posts), key=lambda x: x['timestamp'])
+        return sorted(
+            filter(
+                lambda x: x['timestamp'] > latest_timestamp,
+                posts),
+            key=lambda x: x['timestamp'])
 
     @check_for_announcements.before_loop
     async def init(self) -> None:
@@ -176,14 +191,114 @@ class Announcements(commands.Cog):
     def reduce_image_size(self, image: io.BytesIO) -> io.BytesIO:
         pass
 
-    # TODO
-    def split_text(self, text: str, char_limit: int = 2000) -> list[str]:
-        pass
+    def split_very_long_word(
+        self,
+        word: str,
+        char_limit: int
+    ) -> list[str]:
+        out = []
+        char_per_line = char_limit - 1
+
+        for i in range(len(word) // char_per_line):
+            sub = f'{word[i * char_per_line:((i + 1) * char_per_line)]}-'
+            out.append(sub)
+
+        last = word[(i + 1) * char_per_line:]
+        if not last:
+            out[-1] = out[-1][:-1]
+        elif len(last) == 1:
+            out[-1] = f'{out[-1][:-1]}{last}'
+        else:
+            out.append(last)
+
+        return out
+
+    def _join_split_text(
+        self,
+        text: list[str],
+        sep: str,
+        end: str = ''
+    ) -> str:
+        return f'{sep.join(text)}{end}'.strip()
+
+    def split_text(
+        self,
+        text: str,
+        char_limit: int = 2000,
+        sep: str = '\n'
+    ) -> list[str]:
+        if len(text) <= char_limit:
+            return [text]
+
+        # out: list[str] = []
+        # # text_to_join: list[str] = []
+        # sep_length = len(sep)
+        # current_line = ''
+
+        # current_text_length = 0
+
+        # for line in text.split(sep):
+        #     inner_separator = NEXT_LINE_SEPARATOR[sep]
+
+        #     length = len(line)
+        #     tmp = current_text_length + length + sep_length
+
+        #     if length > char_limit:
+        #         try:
+        #             split_line = self.split_text(
+        #                 line,
+        #                 char_limit,
+        #                 inner_separator
+        #             )
+        #         except KeyError:
+        #             split_line = self.split_very_long_word(line, char_limit)
+        #             inner_separator = ''
+
+        #         # while current_text_length < char_limit and split_line:
+        #         #     cur = split_line.pop(0)
+
+        #         first_line = split_line[0] + inner_separator.strip()
+
+        #         if current_text_length == 0:
+        #             out.append(first_line)
+
+        #             split_line.pop(0)
+        #         elif current_text_length + \
+        #                 len(first_line) + len(sep) <= char_limit:
+        #             text_to_join.append(first_line)
+        #             current_text_length += len(first_line)
+        #             split_line.pop(0)
+
+        #         if text_to_join:
+        #             out.append(self._join_split_text(text_to_join, sep))
+
+        #         out.extend(split_line[:-1])
+        #         text_to_join = [split_line[-1]]
+        #         current_text_length = len(split_line[-1])
+
+        #         continue
+
+        #     if tmp > char_limit:
+        #         out.append(self._join_split_text(text_to_join, sep))
+        #         text_to_join.clear()
+        #         current_text_length = 0
+
+        #     text_to_join.append(line)
+        #     current_text_length += length
+
+        # if text_to_join:
+        #     out.append(self._join_split_text(text_to_join, sep))
+            # new_length = current_text_length + sep_length + line
+            # if new_length > char_limit:
+            #     excess_chars
+
+        # return out
+        return self.wrapper.wrap(text)
 
     def prepare_images(
         self,
         images: list[tuple[io.BytesIO, str]]
-    ) -> Generator[list[disnake.File], None, list[disnake.File]]:
+    ) -> Generator[list[disnake.File], None, None]:
         current_image_group: list[disnake.File] = []
         current_total_size = 0
 
@@ -209,7 +324,7 @@ class Announcements(commands.Cog):
         except IndexError:
             pass
 
-        return current_image_group
+        yield current_image_group
 
     def format_announcements_date(self, timestamp: int) -> str:
         return f'Post zamieszczono: <t:{timestamp}:F>\n'
@@ -217,27 +332,22 @@ class Announcements(commands.Cog):
     def format_posts_url(self, url: str) -> str:
         return f'\nOryginał: {url}'
 
+    @staticmethod
+    def clean_whitespaces_in_text(text: str) -> str:
+        return space_regex.sub(' ', text)
+
     def format_announcement_text(
         self,
         text: str,
         timestamp: int,
-        post_url: str
+        post_url: str,
     ) -> list[str]:
-        # TODO: Split too long text into parts
         formatted_timestamp = self.format_announcements_date(timestamp)
         formatted_url = self.format_posts_url(post_url)
 
-        total_length = sum(
-            map(len, (formatted_timestamp, formatted_url, text))
-        )
+        text = self.clean_whitespaces_in_text(text)
 
-        out = []
-
-        if total_length > 2000:
-            space_required = total_length - len(text) + len('…')
-            text = f'{text[:-space_required].strip()}…'
-
-        out.append(
+        out = self.split_text(
             f'{formatted_timestamp}{text}{formatted_url}'
         )
 

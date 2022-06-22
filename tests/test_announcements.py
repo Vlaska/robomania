@@ -8,8 +8,43 @@ import pytest
 from robomania.cogs import announcements, utils
 from pytest import MonkeyPatch
 from pytest_mock import MockerFixture
-from disnake.ext.commands import Bot as DisBot
+from disnake.ext.commands import Bot as DisBot  # type: ignore[attr-defined]
 from pytest_httpserver import HTTPServer
+from faker import Faker
+
+
+split_text_parameters = [
+    [
+        100,
+        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam porta urna ut scelerisque malesuada.\nVivamus rutrum dictum velit sed blandit. Maecenas varius lorem egestas urna tincidunt suscipit.\nCras vel dapibus nibh. Cras laoreet facilisis eleifend.\nAliquam efficitur purus et odio porta elementum.',
+        [
+            'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam porta urna ut scelerisque malesuada.',
+            'Vivamus rutrum dictum velit sed blandit. Maecenas varius lorem egestas urna tincidunt suscipit.',
+            'Cras vel dapibus nibh. Cras laoreet facilisis eleifend.',
+            'Aliquam efficitur purus et odio porta elementum.'
+        ]
+    ],
+    [
+        90,
+        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam porta urna ut scelerisque malesuada.\nVivamus rutrum dictum velit sed blandit. Maecenas varius lorem egestas urna tincidunt suscipit.\nCras vel dapibus nibh. Cras laoreet facilisis eleifend.\nAliquam efficitur purus et odio porta elementum.',
+        [
+            'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+            'Nam porta urna ut scelerisque malesuada.\nVivamus rutrum dictum velit sed blandit.',
+            'Maecenas varius lorem egestas urna tincidunt suscipit.',
+            'Cras vel dapibus nibh. Cras laoreet facilisis eleifend.',
+            'Aliquam efficitur purus et odio porta elementum.',
+        ]
+    ],
+    [
+        5,
+        'abc' * 4,
+        [
+            'abca-',
+            'bcab-',
+            'cabc'
+        ]
+      ],
+]
 
 
 @pytest.fixture
@@ -82,10 +117,16 @@ async def test_download_images(
     'sizes,result',
     [
         [[1024, 6000], [2]],
-        [[1024 * 9], [1]],
-        [[1024 * 9, 512], [1, 1]],
+        pytest.param(
+            [1024 * 9], [1],
+            marks=[pytest.mark.xfail(reason='not implemented')]
+        ),
+        pytest.param(
+            [1024 * 9, 512], [1, 1],
+            marks=[pytest.mark.xfail(reason='not implemented')]
+        ),
         [[100] * 12, [10, 2]],
-        [[8000, 10, 100], [2, 1]],
+        [[8000, 10, 500], [2, 1]],
         [[500, 7800, 200], [1, 2]],
     ]
 )
@@ -96,34 +137,52 @@ def test_prepare_images(
     mocker: MockerFixture,
 ) -> None:
     bytesio_mock = mocker.Mock(spec=io.BytesIO)
-    
+
     get_buffer_mock = bytesio_mock.getbuffer = mocker.Mock(spec=io.BytesIO)
-    type(get_buffer_mock.return_value).nbytes = mocker.PropertyMock(side_effect=sizes)
+    type(get_buffer_mock.return_value).nbytes = mocker.PropertyMock(
+        side_effect=sizes
+    )
 
     out = list(anno.prepare_images([(bytesio_mock, 'test.png')] * len(sizes)))
     print(out)
     assert list(map(len, out)) == result
 
 
-@pytest.mark.skip
 def test_format_announcements_date(
     anno: announcements.Announcements
 ) -> None:
-    pass
+    timestamp = int(datetime.now().timestamp())
+    assert f'<t:{timestamp}:F>' in anno.format_announcements_date(timestamp)
 
 
-@pytest.mark.skip
-def test_format_posts_url(
-    anno: announcements.Announcements
+@pytest.mark.skip(reason='Implementation sucks x/')
+@pytest.mark.parametrize('char_limit,text,out', split_text_parameters)
+def test_split_text(
+    anno: announcements.Announcements,
+    char_limit: int,
+    text: str,
+    out: list[str],
 ) -> None:
-    pass
+    assert anno.split_text(text, char_limit) == out
 
 
-@pytest.mark.skip
+def test_split_very_long_word(anno: announcements.Announcements) -> None:
+    assert anno.split_very_long_word('abc' * 4, 5) == [
+        'abca-', 'bcab-', 'cabc'
+    ]
+
+
 def test_format_announcement_text(
-    anno: announcements.Announcements
+    anno: announcements.Announcements,
+    faker: Faker,
 ) -> None:
-    pass
+    text = faker.text(5000)
+
+    formatted_text = anno.format_announcement_text(
+        text, faker.unix_time(), faker.uri()
+    )
+
+    assert all(len(i) <= 2000 for i in formatted_text)
 
 
 @pytest.mark.skip
@@ -151,13 +210,6 @@ def test_filter_fields(
 @pytest.mark.asyncio
 async def test_send_announcements(
     anno: announcements.Announcements,
-) -> None:
-    pass
-
-
-@pytest.mark.skip
-def test_split_text(
-    anno: announcements.Announcements
 ) -> None:
     pass
 

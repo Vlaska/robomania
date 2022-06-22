@@ -16,3 +16,8 @@ def bot() -> _Bot:
 @pytest.fixture(scope="session")
 def httpserver_listen_address():
     return ("127.0.0.1", 1025)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def faker_seed():
+    return 413612
