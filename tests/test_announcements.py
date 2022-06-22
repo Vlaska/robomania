@@ -13,40 +13,6 @@ from pytest_httpserver import HTTPServer
 from faker import Faker
 
 
-split_text_parameters = [
-    [
-        100,
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam porta urna ut scelerisque malesuada.\nVivamus rutrum dictum velit sed blandit. Maecenas varius lorem egestas urna tincidunt suscipit.\nCras vel dapibus nibh. Cras laoreet facilisis eleifend.\nAliquam efficitur purus et odio porta elementum.',
-        [
-            'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam porta urna ut scelerisque malesuada.',
-            'Vivamus rutrum dictum velit sed blandit. Maecenas varius lorem egestas urna tincidunt suscipit.',
-            'Cras vel dapibus nibh. Cras laoreet facilisis eleifend.',
-            'Aliquam efficitur purus et odio porta elementum.'
-        ]
-    ],
-    [
-        90,
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam porta urna ut scelerisque malesuada.\nVivamus rutrum dictum velit sed blandit. Maecenas varius lorem egestas urna tincidunt suscipit.\nCras vel dapibus nibh. Cras laoreet facilisis eleifend.\nAliquam efficitur purus et odio porta elementum.',
-        [
-            'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-            'Nam porta urna ut scelerisque malesuada.\nVivamus rutrum dictum velit sed blandit.',
-            'Maecenas varius lorem egestas urna tincidunt suscipit.',
-            'Cras vel dapibus nibh. Cras laoreet facilisis eleifend.',
-            'Aliquam efficitur purus et odio porta elementum.',
-        ]
-    ],
-    [
-        5,
-        'abc' * 4,
-        [
-            'abca-',
-            'bcab-',
-            'cabc'
-        ]
-      ],
-]
-
-
 @pytest.fixture
 def anno(bot: object, mocker: MockerFixture) -> announcements.Announcements:
     a = announcements.Announcements
@@ -153,23 +119,6 @@ def test_format_announcements_date(
 ) -> None:
     timestamp = int(datetime.now().timestamp())
     assert f'<t:{timestamp}:F>' in anno.format_announcements_date(timestamp)
-
-
-@pytest.mark.skip(reason='Implementation sucks x/')
-@pytest.mark.parametrize('char_limit,text,out', split_text_parameters)
-def test_split_text(
-    anno: announcements.Announcements,
-    char_limit: int,
-    text: str,
-    out: list[str],
-) -> None:
-    assert anno.split_text(text, char_limit) == out
-
-
-def test_split_very_long_word(anno: announcements.Announcements) -> None:
-    assert anno.split_very_long_word('abc' * 4, 5) == [
-        'abca-', 'bcab-', 'cabc'
-    ]
 
 
 def test_format_announcement_text(

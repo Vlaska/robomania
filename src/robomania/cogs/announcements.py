@@ -85,7 +85,6 @@ class Announcements(commands.Cog):
         utils.announcements_last_checked = datetime.datetime.now()
 
         posts = await self.download_facebook_posts()
-        # posts.sort(key=lambda x: x['timestamp'])
         new_posts = await self.get_only_new_posts(posts)
         for post in new_posts[::-1]:
             await self.send_announcements(post)
@@ -191,36 +190,6 @@ class Announcements(commands.Cog):
     def reduce_image_size(self, image: io.BytesIO) -> io.BytesIO:
         pass
 
-    def split_very_long_word(
-        self,
-        word: str,
-        char_limit: int
-    ) -> list[str]:
-        out = []
-        char_per_line = char_limit - 1
-
-        for i in range(len(word) // char_per_line):
-            sub = f'{word[i * char_per_line:((i + 1) * char_per_line)]}-'
-            out.append(sub)
-
-        last = word[(i + 1) * char_per_line:]
-        if not last:
-            out[-1] = out[-1][:-1]
-        elif len(last) == 1:
-            out[-1] = f'{out[-1][:-1]}{last}'
-        else:
-            out.append(last)
-
-        return out
-
-    def _join_split_text(
-        self,
-        text: list[str],
-        sep: str,
-        end: str = ''
-    ) -> str:
-        return f'{sep.join(text)}{end}'.strip()
-
     def split_text(
         self,
         text: str,
@@ -230,69 +199,6 @@ class Announcements(commands.Cog):
         if len(text) <= char_limit:
             return [text]
 
-        # out: list[str] = []
-        # # text_to_join: list[str] = []
-        # sep_length = len(sep)
-        # current_line = ''
-
-        # current_text_length = 0
-
-        # for line in text.split(sep):
-        #     inner_separator = NEXT_LINE_SEPARATOR[sep]
-
-        #     length = len(line)
-        #     tmp = current_text_length + length + sep_length
-
-        #     if length > char_limit:
-        #         try:
-        #             split_line = self.split_text(
-        #                 line,
-        #                 char_limit,
-        #                 inner_separator
-        #             )
-        #         except KeyError:
-        #             split_line = self.split_very_long_word(line, char_limit)
-        #             inner_separator = ''
-
-        #         # while current_text_length < char_limit and split_line:
-        #         #     cur = split_line.pop(0)
-
-        #         first_line = split_line[0] + inner_separator.strip()
-
-        #         if current_text_length == 0:
-        #             out.append(first_line)
-
-        #             split_line.pop(0)
-        #         elif current_text_length + \
-        #                 len(first_line) + len(sep) <= char_limit:
-        #             text_to_join.append(first_line)
-        #             current_text_length += len(first_line)
-        #             split_line.pop(0)
-
-        #         if text_to_join:
-        #             out.append(self._join_split_text(text_to_join, sep))
-
-        #         out.extend(split_line[:-1])
-        #         text_to_join = [split_line[-1]]
-        #         current_text_length = len(split_line[-1])
-
-        #         continue
-
-        #     if tmp > char_limit:
-        #         out.append(self._join_split_text(text_to_join, sep))
-        #         text_to_join.clear()
-        #         current_text_length = 0
-
-        #     text_to_join.append(line)
-        #     current_text_length += length
-
-        # if text_to_join:
-        #     out.append(self._join_split_text(text_to_join, sep))
-            # new_length = current_text_length + sep_length + line
-            # if new_length > char_limit:
-            #     excess_chars
-
-        # return out
         return self.wrapper.wrap(text)
 
     def prepare_images(
