@@ -6,19 +6,19 @@ from random import randint
 from typing import cast
 
 import pytest
-from robomania.cogs import announcements, utils
-from pytest import MonkeyPatch
-from pytest_mock import MockerFixture
 from disnake.ext.commands import Bot as DisBot  # type: ignore[attr-defined]
-from pytest_httpserver import HTTPServer
 from faker import Faker
 from mongomock_motor import AsyncMongoMockClient
+from pytest import MonkeyPatch
+from pytest_httpserver import HTTPServer
+from pytest_mock import MockerFixture
+from robomania.cogs import announcements, utils
 
 
 class PostFactory:
     def __init__(self, fake: Faker) -> None:
         self.timestamp = fake.unix_time()
-        self.text = fake.paragraphs(nb=10)
+        self.post_text = fake.paragraphs(nb=10)
         self.post_id = fake.credit_card_number()
         self.post_url = fake.uri()
         self.likes = 15
@@ -173,19 +173,34 @@ async def test_get_latest_post_timestamp(
     assert await anno.get_latest_post_timestamp() == latest_timestamp
 
 
-@pytest.mark.skip
 @pytest.mark.asyncio
 async def test_get_only_new_posts(
-    anno: announcements.Announcements
+    anno: announcements.Announcements,
+    mocker: MockerFixture,
+    faker: Faker,
 ) -> None:
-    pass
+    posts = PostFactory.bulk(faker, 12)
+
+    sorted_posts = sorted(posts, key=lambda x: x.timestamp)
+    newest_old_post = sorted_posts[5]
+
+    async def _wrapper():
+        return newest_old_post.timestamp
+
+    mocker.patch.object(anno, 'get_latest_post_timestamp', _wrapper)
+
+    newest_posts = await anno.get_only_new_posts(list(map(vars, posts)))
+
+    assert newest_posts == list(map(vars, sorted_posts[6:]))
 
 
-@pytest.mark.skip
 def test_filter_fields(
-    anno: announcements.Announcements
+    anno: announcements.Announcements,
+    faker: Faker,
 ) -> None:
-    pass
+    post = vars(PostFactory(faker))
+
+    assert set(anno.filter_fields(post).keys()) == set(anno.fields_to_keep)
 
 
 @pytest.mark.skip
