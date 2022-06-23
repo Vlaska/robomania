@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 from datetime import datetime
+from random import randint
 from typing import cast
 
 import pytest
@@ -11,6 +12,23 @@ from pytest_mock import MockerFixture
 from disnake.ext.commands import Bot as DisBot  # type: ignore[attr-defined]
 from pytest_httpserver import HTTPServer
 from faker import Faker
+from mongomock_motor import AsyncMongoMockClient
+
+
+class PostFactory:
+    def __init__(self, fake: Faker) -> None:
+        self.timestamp = fake.unix_time()
+        self.text = fake.paragraphs(nb=10)
+        self.post_id = fake.credit_card_number()
+        self.post_url = fake.uri()
+        self.likes = 15
+        img_count = randint(0, 5)
+        self.images_descriptions = fake.paragraphs(nb=img_count)
+        self.images = [fake.image_url() for _ in range(img_count)]
+
+    @classmethod
+    def bulk(cls, fake: Faker, num: int) -> list[PostFactory]:
+        return [cls(fake) for _ in range(num)]
 
 
 @pytest.fixture
@@ -134,10 +152,25 @@ def test_format_announcement_text(
     assert all(len(i) <= 2000 for i in formatted_text)
 
 
-@pytest.mark.skip
 @pytest.mark.asyncio
-async def test_get_latest_post_timestamp() -> None:
-    pass
+async def test_get_latest_post_timestamp(
+    anno: announcements.Announcements,
+    faker: Faker,
+    client: AsyncMongoMockClient
+) -> None:
+    collection = client.robomania.posts
+
+    posts = PostFactory.bulk(faker, 50)
+
+    latest_timestamp = int(datetime.now().timestamp()) + 60
+
+    known_post = PostFactory(faker)
+    known_post.timestamp = latest_timestamp
+
+    posts.append(known_post)
+    await collection.insert_many(vars(i) for i in posts)
+
+    assert await anno.get_latest_post_timestamp() == latest_timestamp
 
 
 @pytest.mark.skip

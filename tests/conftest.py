@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 import asyncio
+from mongomock_motor import AsyncMongoMockClient
 
 
 class _Bot:
@@ -21,3 +22,12 @@ def httpserver_listen_address():
 @pytest.fixture(scope="session", autouse=True)
 def faker_seed():
     return 413612
+
+
+@pytest.fixture
+def client(monkeypatch: pytest.MonkeyPatch) -> AsyncMongoMockClient:
+    c = AsyncMongoMockClient()
+
+    monkeypatch.setattr('robomania.cogs.utils.get_client', lambda: c)
+
+    return c

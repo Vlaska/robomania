@@ -104,18 +104,16 @@ class Announcements(commands.Cog):
         db = utils.get_db('robomania')
         col = db.posts
 
-        try:
-            latest_post = await cast(Awaitable, col.aggregate([
-                {'$sort': {'timestamp': -1}},
-                {'$limit': 1},
-                {'$project': {'_id': 0, 'timestamp': 1}}
-            ]).next())
-        except StopAsyncIteration:
-            timestamp = 0
-        else:
-            timestamp = latest_post['timestamp']
+        latest_post = await cast(Awaitable, col.aggregate([  # type: ignore
+            {'$sort': {'timestamp': -1}},
+            {'$limit': 1},
+            {'$project': {'_id': 0, 'timestamp': 1}}
+        ]).to_list(1))
 
-        return timestamp
+        if latest_post:
+            return latest_post[0]['timestamp']
+
+        return 0
 
     async def get_only_new_posts(
         self,
