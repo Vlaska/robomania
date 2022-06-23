@@ -38,11 +38,11 @@ class Announcements(commands.Cog):
         'post_url',
     ]
     fanpage_name = 'domeq.krk'
-    target_channels_ids = [
-        958823316850880515,  # Trash - general
-    ]
+
+    target_channel_id = 958823316850880515  # Trash - general
+
     last_checked = datetime.datetime(1, 1, 1)
-    target_channels: list[disnake.TextChannel]
+    target_channel: disnake.TextChannel
     DOWNLOAD_PAGE_LIMIT = 4
     MIN_DELAY_BETWEEN_CHECKS = datetime.timedelta(minutes=30)
     _DISABLE_ANNOUNCEMENTS_LOOP = False
@@ -138,9 +138,7 @@ class Announcements(commands.Cog):
         print('Waiting...')
 
         await self.bot.wait_until_ready()
-        self.target_channels = []
-        for i in self.target_channels_ids:
-            self.target_channels.append(self.bot.get_channel(i))
+        self.target_channel = self.bot.get_channel(self.target_channel_id)
 
     async def download_facebook_posts(self) -> list[dict[str, Any]]:
         loop = self.bot.loop
