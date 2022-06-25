@@ -231,7 +231,7 @@ def test_change_image_resolution(
     assert f.size == (500, 500)
 
 
-@pytest.mark.parametrize('no_images', [[False], [True]])
+@pytest.mark.parametrize('no_images', [False, True])
 @pytest.mark.asyncio
 async def test_send_announcements(
     anno: announcements.Announcements,
@@ -292,13 +292,46 @@ async def test_send_announcements(
     assert send_announcements_mock.call_args_list == send_announcements_arguments
 
 
-@pytest.mark.skip
+@pytest.mark.parametrize('new_posts', [False, True])
 @pytest.mark.asyncio
 async def test_check_for_announcements(
-    anno: announcements.Announcements
+    anno: announcements.Announcements,
+    faker: Faker,
+    mocker: MockerFixture,
+    new_posts: bool,
 ) -> None:
-    # posts = PostFactory.bulk(faker, 20)
-    # sorted_posts = sorted(posts, key=lambda x: x.timestamp)
-    # newest_posted_post = sorted_posts[17]
-    # newest_timestamp = newest_posted_post.timestamp
-    pass
+    posts = PostFactory.bulk(faker, 20)
+    sorted_posts = sorted(posts, key=lambda x: x.timestamp)
+    filtered_out_posts = sorted_posts[17:]
+
+    download_facebook_posts_mock = mocker.patch.object(
+        anno,
+        'download_facebook_posts'
+    )
+    download_facebook_posts_mock.return_value = posts
+
+    get_only_new_posts_mock = mocker.patch.object(anno, 'get_only_new_posts')
+
+    if new_posts:
+        get_only_new_posts_mock.return_value = filtered_out_posts
+    else:
+        get_only_new_posts_mock.return_value = []
+
+    send_announcements_mock = mocker.patch.object(anno, 'send_announcements')
+    save_posts_mock = mocker.patch.object(anno, 'save_posts')
+
+    await anno._check_for_announcements()
+
+    download_facebook_posts_mock.assert_called_once()
+    get_only_new_posts_mock.assert_called_once_with(posts)
+
+    if new_posts:
+        assert send_announcements_mock.call_args_list == [
+            mocker.call(filtered_out_posts[0]),
+            mocker.call(filtered_out_posts[1]),
+            mocker.call(filtered_out_posts[2]),
+        ]
+        save_posts_mock.assert_called_once_with(filtered_out_posts)
+    else:
+        send_announcements_mock.assert_not_called()
+        save_posts_mock.assert_not_called()
