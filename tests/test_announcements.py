@@ -26,6 +26,7 @@ class PostFactory:
         img_count = randint(0, 5)
         self.images_descriptions = fake.paragraphs(nb=img_count)
         self.images = [fake.image_url() for _ in range(img_count)]
+        self.__dict__['with'] = []
 
     @classmethod
     def bulk(cls, fake: Faker, num: int) -> list[PostFactory]:
@@ -213,7 +214,7 @@ def test_change_image_format(
 
     jpg_img = anno.change_image_format(png_img)
     jpg_img.seek(0)
-    assert type(jpg_img) is io.BytesIO
+    assert isinstance(jpg_img, io.BytesIO)
     assert jpg_img.read(4) == b'\xff\xd8\xff\xe0'
 
 
@@ -226,7 +227,7 @@ def test_change_image_resolution(
 
     resized_img = anno.reduce_image_resolution(og_img, 0.5)
     resized_img.seek(0)
-    assert type(resized_img) is io.BytesIO
+    assert isinstance(resized_img, io.BytesIO)
     f = PIL.Image.open(resized_img)
     assert f.size == (500, 500)
 
@@ -311,11 +312,17 @@ async def test_check_for_announcements(
     download_facebook_posts_mock.return_value = posts
 
     get_only_new_posts_mock = mocker.patch.object(anno, 'get_only_new_posts')
+    filter_out_only_event_posts_mock = mocker.patch.object(
+        anno, 'filter_out_only_event_posts'
+    )
 
     if new_posts:
-        get_only_new_posts_mock.return_value = filtered_out_posts
+        filtered_posts = filtered_out_posts
     else:
-        get_only_new_posts_mock.return_value = []
+        filtered_posts = []
+
+    get_only_new_posts_mock.return_value = filtered_posts
+    filter_out_only_event_posts_mock.return_value = filtered_posts
 
     send_announcements_mock = mocker.patch.object(anno, 'send_announcements')
     save_posts_mock = mocker.patch.object(anno, 'save_posts')
@@ -324,7 +331,8 @@ async def test_check_for_announcements(
 
     download_facebook_posts_mock.assert_called_once()
     get_only_new_posts_mock.assert_called_once_with(posts)
-
+    filter_out_only_event_posts_mock.assert_called_once_with(filtered_posts)
+    
     if new_posts:
         assert send_announcements_mock.call_args_list == [
             mocker.call(filtered_out_posts[0]),
@@ -335,3 +343,58 @@ async def test_check_for_announcements(
     else:
         send_announcements_mock.assert_not_called()
         save_posts_mock.assert_not_called()
+
+
+@pytest.mark.parametrize('with_content,has_event', [
+    [
+        [
+            {'name': 'event',
+             'link': '/events/542918700556684?locale2=en_US&__tn__=C-R'}
+        ],
+        True
+    ],
+    [
+        [
+            {'name': 'Prideshop.pl',
+             'link': '/prideshoppl/?locale2=en_US&__tn__=CH-R'},
+            {'name': 'event',
+                'link': '/events/542918700556684?locale2=en_US&__tn__=C-R'}
+        ],
+        True
+    ],
+    [
+        [
+            {'name': 'Prideshop.pl',
+             'link': '/prideshoppl/?locale2=en_US&__tn__=CH-R'}
+        ],
+        False
+    ]
+])
+def test_post_contains_event(
+    anno: announcements.Announcements,
+    faker: Faker,
+    with_content: list[dict[str, str]],
+    has_event: bool,
+) -> None:
+    post = vars(PostFactory(faker))
+
+    post['with'] = with_content
+
+    assert anno._post_contains_event(post) is has_event
+
+
+def test_filter_out_only_event_posts(
+    anno: announcements.Announcements,
+    faker: Faker,
+) -> None:
+    ps = p0, p1, p2, p3 = list(map(vars, PostFactory.bulk(faker, 4)))
+    p0['post_text'] = ''
+
+    p1['post_text'] = ''
+    p1['with'].append({'name': 'event'})
+
+    p2['with'].append({'name': 'event'})
+
+    p3['with'].append({'name': 'not an event'})
+
+    assert anno.filter_out_only_event_posts(ps) == [p0, p2, p3]

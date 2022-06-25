@@ -89,15 +89,16 @@ class Announcements(commands.Cog):
             utils.announcements_last_checked = datetime.datetime.now()
 
             posts = await self.download_facebook_posts()
-            new_posts = await self.get_only_new_posts(posts)
+            posts = await self.get_only_new_posts(posts)
+            posts = self.filter_out_only_event_posts(posts)
 
-            if not new_posts:
+            if not posts:
                 return
 
-            for post in new_posts:
+            for post in posts:
                 await self.send_announcements(post)
 
-            await self.save_posts(new_posts)
+            await self.save_posts(posts)
 
     @tasks.loop(time=[
         datetime.time(hour=h, minute=m)
@@ -145,6 +146,19 @@ class Announcements(commands.Cog):
                 lambda x: x['timestamp'] > latest_timestamp,
                 posts),
             key=lambda x: x['timestamp'])
+
+    @staticmethod
+    def _post_contains_event(post: Post) -> bool:
+        return any(i['name'] == 'event' for i in post['with'])
+
+    def filter_out_only_event_posts(self, posts: Posts) -> Posts:
+        def condition(x: Post) -> bool:
+            return not (
+                not x['post_text'] and
+                self._post_contains_event(x)
+            )
+
+        return list(filter(condition, posts))
 
     @check_for_announcements.before_loop
     async def init(self) -> None:
