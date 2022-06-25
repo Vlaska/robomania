@@ -4,6 +4,7 @@ import io
 from datetime import datetime
 from random import randint
 from typing import cast
+import PIL
 
 import pytest
 from disnake.ext.commands import Bot as DisBot  # type: ignore[attr-defined]
@@ -203,12 +204,92 @@ def test_filter_fields(
     assert set(anno.filter_fields(post).keys()) == set(anno.fields_to_keep)
 
 
-@pytest.mark.skip
+def test_change_image_format(
+    anno: announcements.Announcements,
+    faker: Faker,
+) -> None:
+    img = faker.image((1000, 1000), 'png')
+    png_img = io.BytesIO(img)
+
+    jpg_img = anno.change_image_format(png_img)
+    jpg_img.seek(0)
+    assert type(jpg_img) is io.BytesIO
+    assert jpg_img.read(4) == b'\xff\xd8\xff\xe0'
+
+
+def test_change_image_resolution(
+    anno: announcements.Announcements,
+    faker: Faker,
+) -> None:
+    img = faker.image((1000, 1000), 'jpeg')
+    og_img = io.BytesIO(img)
+
+    resized_img = anno.reduce_image_resolution(og_img, 0.5)
+    resized_img.seek(0)
+    assert type(resized_img) is io.BytesIO
+    f = PIL.Image.open(resized_img)
+    assert f.size == (500, 500)
+
+
+@pytest.mark.parametrize('no_images', [[False], [True]])
 @pytest.mark.asyncio
 async def test_send_announcements(
     anno: announcements.Announcements,
+    mocker: MockerFixture,
+    faker: Faker,
+    no_images: bool,
 ) -> None:
-    pass
+    post = PostFactory(faker)
+    if no_images:
+        post.images.clear()
+
+    format_announcement_text_mock = mocker.patch.object(
+        anno,
+        'format_announcement_text'
+    )
+
+    text_len = len(post.post_text)
+    t = [
+        f'{post.timestamp}{post.post_text[:text_len//2]}',
+        f'{post.post_text[text_len//2:]}{post.post_url}',
+    ]
+    format_announcement_text_mock.return_value = t
+
+    images = [faker.image((8, 8)) for _ in range(5)]
+    prepared_images = [images[:2], images[2:4], images[4:]]
+
+    download_images_mock = mocker.patch.object(anno, 'download_images')
+    download_images_mock.return_value = images
+
+    prepare_images_mock = mocker.patch.object(anno, 'prepare_images')
+    prepare_images_mock.return_value = iter(prepared_images)
+
+    send_announcements_mock = mocker.patch.object(anno, '_send_announcements')
+
+    await anno.send_announcements(vars(post))
+
+    format_announcement_text_mock.assert_called_once_with(
+        post.post_text, post.timestamp, post.post_url
+    )
+    if no_images:
+        download_images_mock.assert_not_called()
+        prepare_images_mock.assert_not_called()
+        send_announcements_arguments = [
+            mocker.call(t[0]),
+            mocker.call(t[1]),
+        ]
+    else:
+        download_images_mock.assert_called_once_with(post.images)
+        prepare_images_mock.assert_called_once_with(images)
+        send_announcements_arguments = [
+            mocker.call(t[0]),
+            mocker.call(t[1], prepared_images[0]),
+            mocker.call(None, prepared_images[1]),
+            mocker.call(None, prepared_images[2]),
+        ]
+
+    send_announcements_mock.assert_called()
+    assert send_announcements_mock.call_args_list == send_announcements_arguments
 
 
 @pytest.mark.skip
@@ -216,11 +297,8 @@ async def test_send_announcements(
 async def test_check_for_announcements(
     anno: announcements.Announcements
 ) -> None:
-    pass
-
-
-@pytest.mark.skip
-def test_in_allowed_time_range(
-    anno: announcements.Announcements
-) -> None:
+    # posts = PostFactory.bulk(faker, 20)
+    # sorted_posts = sorted(posts, key=lambda x: x.timestamp)
+    # newest_posted_post = sorted_posts[17]
+    # newest_timestamp = newest_posted_post.timestamp
     pass

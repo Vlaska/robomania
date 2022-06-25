@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import datetime
 import io
 import logging
-import math
 import re
+from itertools import product
 from pathlib import Path
 from textwrap import TextWrapper
 from typing import Any, Awaitable, Generator, cast
@@ -15,6 +16,7 @@ import disnake
 import pymongo
 from disnake.ext import commands, tasks  # type: ignore[attr-defined]
 from facebook_scraper import get_posts
+from PIL import Image
 from pymongo.database import Database
 
 from . import utils
@@ -44,16 +46,19 @@ class Announcements(commands.Cog):
     last_checked = datetime.datetime(1, 1, 1)
     target_channel: disnake.TextChannel
     DOWNLOAD_PAGE_LIMIT = 4
-    MIN_DELAY_BETWEEN_CHECKS = datetime.timedelta(minutes=30)
+    MIN_DELAY_BETWEEN_CHECKS = datetime.timedelta(minutes=25)
     _DISABLE_ANNOUNCEMENTS_LOOP = False
     wrapper = TextWrapper(
         MAX_CHARACTERS_PER_POST,
         expand_tabs=False,
         replace_whitespace=False
     )
+    checking_interval_hours = (7, 21)
+    check_every_minutes = (0, 30)
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.check_lock = asyncio.Lock()
         if not self._DISABLE_ANNOUNCEMENTS_LOOP:
             self.check_for_announcements.start()
 
@@ -65,7 +70,7 @@ class Announcements(commands.Cog):
         )
 
     def cog_unload(self) -> None:
-        self.check_for_announcements.cancel()
+        self.check_for_announcements.stop()
 
     def enough_time_from_last_check(self) -> bool:
         current_time = datetime.datetime.now()
@@ -73,23 +78,36 @@ class Announcements(commands.Cog):
 
         return time_since_last_check > self.MIN_DELAY_BETWEEN_CHECKS
 
-    # TODO
-    def in_allowed_time_range(self) -> bool:
-        pass
+    async def _check_for_announcements(self) -> None:
+        if self.check_lock.locked():
+            return
 
-    @tasks.loop(hours=1)  # TODO
+        async with self.check_lock:
+            utils.announcements_last_checked = datetime.datetime.now()
+
+            posts = await self.download_facebook_posts()
+            new_posts = await self.get_only_new_posts(posts)
+
+            if not new_posts:
+                return
+
+            for post in new_posts:
+                await self.send_announcements(post)
+
+            await self.save_posts(new_posts)
+
+    @tasks.loop(time=[
+        datetime.time(hour=h, minute=m)
+        for h, m in product(
+            range(*checking_interval_hours),
+            check_every_minutes
+        )
+    ])
     async def check_for_announcements(self) -> None:
         if not self.enough_time_from_last_check():
             return
 
-        utils.announcements_last_checked = datetime.datetime.now()
-
-        posts = await self.download_facebook_posts()
-        new_posts = await self.get_only_new_posts(posts)
-        for post in new_posts[::-1]:
-            await self.send_announcements(post)
-
-        await self.save_posts(new_posts)
+        await self._check_for_announcements()
 
     async def save_posts(self, posts: list[dict[str, Any]]) -> None:
         col = utils.get_db('robomania')
@@ -113,13 +131,14 @@ class Announcements(commands.Cog):
         if latest_post:
             return latest_post[0]['timestamp']
 
-        return 0
+        raise ValueError('Database not initialized')
 
     async def get_only_new_posts(
         self,
         posts: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
         latest_timestamp = await self.get_latest_post_timestamp()
+        logger.debug('Filtering out old posts')
 
         return sorted(
             filter(
@@ -129,23 +148,28 @@ class Announcements(commands.Cog):
 
     @check_for_announcements.before_loop
     async def init(self) -> None:
-        client = utils.get_client()
-
-        await self.create_collection(client.robomania)
-
-        print('Waiting...')
-
+        logger.info('Waiting for connection to discord...')
         await self.bot.wait_until_ready()
+
+        client = utils.get_client()
+        await self.create_collections(client.robomania)
+
         self.target_channel = self.bot.get_channel(self.target_channel_id)
+        await self._check_for_announcements()
+    
+    def _get_posts(self) -> Any:
+        return get_posts(
+            self.fanpage_name,
+            page_limit=self.DOWNLOAD_PAGE_LIMIT
+        )
 
     async def download_facebook_posts(self) -> list[dict[str, Any]]:
         loop = self.bot.loop
+        logger.debug('Downloading facebook posts')
         return list(
             await loop.run_in_executor(
                 None,
-                get_posts,
-                self.fanpage_name,
-                page_limit=self.DOWNLOAD_PAGE_LIMIT
+                self._get_posts,
             )
         )
 
@@ -160,11 +184,11 @@ class Announcements(commands.Cog):
         text: str = None,
         imgs: list[disnake.File] = None
     ) -> None:
-        for channel in self.target_channels:
-            await channel.send(
-                text,
-                files=cast(list[disnake.File], imgs)
-            )
+        await self.target_channel.send(
+            text,
+            files=cast(list[disnake.File], imgs),
+            suppress_embeds=True,
+        )
 
     async def download_images(
         self,
@@ -183,14 +207,29 @@ class Announcements(commands.Cog):
 
         return out
 
-    def reduce_image_size(self, image: io.BytesIO) -> io.BytesIO:
-        pass
+    def reduce_image_resolution(
+        self,
+        image: io.BytesIO,
+        factor: float
+    ) -> io.BytesIO:
+        out = io.BytesIO()
+        img = Image.open(image)
+        old_x, old_y = img.size
+        new_size = (int(old_x * factor), int(old_y * factor))
+        resized_img = img.resize(new_size, resample=Image.NEAREST)
+        resized_img.save(out, 'jpeg')
+        return out
+
+    def change_image_format(self, image: io.BytesIO) -> io.BytesIO:
+        out = io.BytesIO()
+        img = Image.open(image)
+        img.convert('RGB').save(out, 'jpeg')
+        return out
 
     def split_text(
         self,
         text: str,
         char_limit: int = 2000,
-        sep: str = '\n'
     ) -> list[str]:
         if len(text) <= char_limit:
             return [text]
@@ -222,14 +261,13 @@ class Announcements(commands.Cog):
                 current_image_group.append(
                     disnake.File(image_data, image_name)
                 )
-
         except IndexError:
             pass
 
         yield current_image_group
 
     def format_announcements_date(self, timestamp: int) -> str:
-        return f'Post zamieszczono: <t:{timestamp}:F>\n'
+        return f'**Post zamieszczono: <t:{timestamp}:F>**\n'
 
     def format_posts_url(self, url: str) -> str:
         return f'\nOryginał: {url}'
@@ -256,6 +294,7 @@ class Announcements(commands.Cog):
         return out
 
     async def send_announcements(self, post: dict[str, Any]) -> None:
+        logger.info(f'Sending announcement: {post["post_id"]}')
         text: str = post['post_text']
         image_urls: list[str] = post['images']
         timestamp: int = post['timestamp']
@@ -267,6 +306,10 @@ class Announcements(commands.Cog):
 
         for i in formatted_text[:-1]:
             await self._send_announcements(i)
+
+        if not image_urls:
+            await self._send_announcements(formatted_text[-1])
+            return
 
         image_data = await self.download_images(image_urls)
         images = self.prepare_images(image_data)

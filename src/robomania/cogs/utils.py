@@ -20,7 +20,8 @@ def get_client() -> AsyncIOMotorClient:
     try:
         return client
     except NameError:
-        raise ValueError('Trying to import database before its initialized.')
+        init_db()
+        return client
 
 
 def init_db() -> None:
@@ -41,10 +42,10 @@ def init_db() -> None:
 
     if port:
         port = f':{port}'
-    
-    if auth_db:
-        auth_db = f'{auth_db}/'
+        protocol = 'mongodb'
+    else:
+        protocol = 'mongodb+srv'
 
     client = AsyncIOMotorClient(
-        f"mongodb+srv://{username}:{password}@{host}{port}/{auth_db}?retryWrites=true&w=majority"
+        f"{protocol}://{username}:{password}@{host}{port}/{auth_db}?retryWrites=true&w=majority"
     )
