@@ -30,6 +30,9 @@ logger = logging.getLogger('disnake')
 
 space_regex = re.compile(' +')
 
+Post = dict[str, Any]
+Posts = list[Post]
+
 
 class Announcements(commands.Cog):
     fields_to_keep = [
@@ -109,7 +112,7 @@ class Announcements(commands.Cog):
 
         await self._check_for_announcements()
 
-    async def save_posts(self, posts: list[dict[str, Any]]) -> None:
+    async def save_posts(self, posts: Posts) -> None:
         col = utils.get_db('robomania')
 
         await cast(
@@ -133,10 +136,7 @@ class Announcements(commands.Cog):
 
         raise ValueError('Database not initialized')
 
-    async def get_only_new_posts(
-        self,
-        posts: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    async def get_only_new_posts(self, posts: Posts) -> Posts:
         latest_timestamp = await self.get_latest_post_timestamp()
         logger.debug('Filtering out old posts')
 
@@ -156,14 +156,14 @@ class Announcements(commands.Cog):
 
         self.target_channel = self.bot.get_channel(self.target_channel_id)
         await self._check_for_announcements()
-    
-    def _get_posts(self) -> Any:
+
+    def _get_posts(self) -> Posts:
         return get_posts(
             self.fanpage_name,
             page_limit=self.DOWNLOAD_PAGE_LIMIT
         )
 
-    async def download_facebook_posts(self) -> list[dict[str, Any]]:
+    async def download_facebook_posts(self) -> Posts:
         loop = self.bot.loop
         logger.debug('Downloading facebook posts')
         return list(
@@ -174,7 +174,7 @@ class Announcements(commands.Cog):
         )
 
     @classmethod
-    def filter_fields(cls, post: dict[str, Any]) -> dict[str, Any]:
+    def filter_fields(cls, post: Post) -> Post:
         return {
             k: post[k] for k in cls.fields_to_keep
         }
@@ -293,7 +293,7 @@ class Announcements(commands.Cog):
 
         return out
 
-    async def send_announcements(self, post: dict[str, Any]) -> None:
+    async def send_announcements(self, post: Post) -> None:
         logger.info(f'Sending announcement: {post["post_id"]}')
         text: str = post['post_text']
         image_urls: list[str] = post['images']
