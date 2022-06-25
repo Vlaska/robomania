@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: moduł",
+            "type": "python",
+            "request": "launch",
+            "module": "robomania",
+            "justMyCode": true
+        },
+        {
             "name": "Python: bot",
             "type": "python",
             "request": "launch",
