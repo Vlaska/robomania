@@ -22,7 +22,7 @@ from pymongo.database import Database
 from . import utils
 
 MAX_IMAGES_PER_MESSAGE = 10
-MAX_TOTAL_SIZE_OF_IMAGES = 8 * 1024
+MAX_TOTAL_SIZE_OF_IMAGES = 8 * 1024 * 1024
 MAX_CHARACTERS_PER_POST = 2000
 
 

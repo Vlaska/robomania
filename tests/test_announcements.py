@@ -121,7 +121,9 @@ def test_prepare_images(
     sizes: list[int],
     result: list[int] | None,
     mocker: MockerFixture,
+    monkeypatch: MonkeyPatch
 ) -> None:
+    monkeypatch.setattr(announcements, 'MAX_TOTAL_SIZE_OF_IMAGES', 8 * 1024)
     bytesio_mock = mocker.Mock(spec=io.BytesIO)
 
     get_buffer_mock = bytesio_mock.getbuffer = mocker.Mock(spec=io.BytesIO)
