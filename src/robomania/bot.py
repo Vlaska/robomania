@@ -66,7 +66,11 @@ async def reload(ctx, extension):
     await ctx.send(embed=embed)
 
 
-if __name__ == '__main__':
+def main() -> None:
+    init_logger()
     bot.load_extension('cogs.tester')
     bot.load_extension('cogs.announcements')
     bot.run(TOKEN)
+
+if __name__ == '__main__':
+    main()
