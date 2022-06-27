@@ -34,7 +34,10 @@ class Tester(commands.Cog):
             limit=messages,
             before=inter.created_at
         )
-        await inter.followup.send(f'Deleted {len(deleted)} messages.')
+        await inter.followup.send(
+            f'Deleted {len(deleted)} messages.',
+            delete_after=5
+        )
 
 
 def setup(bot: commands.Bot):
