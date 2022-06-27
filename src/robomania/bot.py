@@ -42,14 +42,6 @@ async def on_ready():
     print(bot.cogs)
 
 
-# @bot.event
-# async def on_message(message):
-#     if message.author == bot.user:
-#         return
-
-#     if message.content.startswith('>hello'):
-#         await message.channel.send('Hello!')
-
 @bot.slash_command(description='Test command')
 async def hello(inter: disnake.ApplicationCommandInteraction):
     await inter.response.send_message('World')
@@ -68,9 +60,10 @@ async def reload(ctx, extension):
 
 def main() -> None:
     init_logger()
-    bot.load_extension('cogs.tester')
-    bot.load_extension('cogs.announcements')
+    bot.load_extension('robomania.cogs.tester')
+    bot.load_extension('robomania.cogs.announcements')
     bot.run(TOKEN)
+
 
 if __name__ == '__main__':
     main()
