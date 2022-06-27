@@ -5,10 +5,11 @@ import datetime
 import io
 import logging
 import re
+from functools import partial
 from itertools import product
 from pathlib import Path
 from textwrap import TextWrapper
-from typing import Any, Awaitable, Generator, cast
+from typing import Any, Awaitable, Generator, Iterator, cast
 from urllib.parse import urlparse
 
 import aiohttp
@@ -32,6 +33,55 @@ space_regex = re.compile(' +')
 
 Post = dict[str, Any]
 Posts = list[Post]
+
+
+class PostDownloader:
+    DONE = object()
+
+    def __init__(
+        self,
+        loop: asyncio.AbstractEventLoop,
+        lazy_posts: Iterator[Post]
+    ) -> None:
+        self._lazy_posts = lazy_posts
+        self.loop = loop
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self) -> Post:
+        out: Post | object = await self.loop.run_in_executor(
+            None,
+            next,
+            self._lazy_posts,
+            self.DONE
+        )
+
+        if out is self.DONE:
+            raise StopAsyncIteration
+
+        return cast(Post, out)
+
+    async def get_all(self) -> Posts:
+        out = []
+
+        async for i in self:
+            out.append(i)
+
+        return out
+
+    @classmethod
+    async def new(
+        cls,
+        loop: asyncio.AbstractEventLoop,
+        fanpage: str,
+        pages: int
+    ) -> PostDownloader:
+        lazy_posts = await loop.run_in_executor(
+            None,
+            partial(get_posts, fanpage, page_limit=pages)
+        )
+        return cls(loop, lazy_posts)
 
 
 class Announcements(commands.Cog):
@@ -75,6 +125,14 @@ class Announcements(commands.Cog):
     def cog_unload(self) -> None:
         self.check_for_announcements.stop()
 
+    @commands.slash_command(name='check')
+    async def command_posts(
+        self,
+        inter: disnake.ApplicationCommandInteraction,
+    ) -> None:
+        await inter.send('Ok', delete_after=5)
+        await self._check_for_announcements()
+
     def enough_time_from_last_check(self) -> bool:
         current_time = datetime.datetime.now()
         time_since_last_check = current_time - utils.announcements_last_checked
@@ -86,19 +144,22 @@ class Announcements(commands.Cog):
             return
 
         async with self.check_lock:
-            utils.announcements_last_checked = datetime.datetime.now()
+            try:
+                utils.announcements_last_checked = datetime.datetime.now()
 
-            posts = await self.download_facebook_posts()
-            posts = await self.get_only_new_posts(posts)
-            posts = self.filter_out_only_event_posts(posts)
+                posts = await self.download_facebook_posts()
+                posts = await self.get_only_new_posts(posts)
+                posts = self.filter_out_only_event_posts(posts)
 
-            if not posts:
-                return
+                if not posts:
+                    return
 
-            for post in posts:
-                await self.send_announcements(post)
+                for post in posts:
+                    await self.send_announcements(post)
 
-            await self.save_posts(posts)
+                await self.save_posts(posts)
+            except Exception:
+                logger.exception('')
 
     @tasks.loop(time=[
         datetime.time(hour=h, minute=m)
@@ -171,21 +232,16 @@ class Announcements(commands.Cog):
         self.target_channel = self.bot.get_channel(self.target_channel_id)
         await self._check_for_announcements()
 
-    def _get_posts(self) -> Posts:
-        return get_posts(
-            self.fanpage_name,
-            page_limit=self.DOWNLOAD_PAGE_LIMIT
-        )
-
     async def download_facebook_posts(self) -> Posts:
         loop = self.bot.loop
         logger.debug('Downloading facebook posts')
-        return list(
-            await loop.run_in_executor(
-                None,
-                self._get_posts,
-            )
+
+        post_iter = await PostDownloader.new(
+            loop,
+            self.fanpage_name,
+            self.DOWNLOAD_PAGE_LIMIT
         )
+        return await post_iter.get_all()
 
     @classmethod
     def filter_fields(cls, post: Post) -> Post:
