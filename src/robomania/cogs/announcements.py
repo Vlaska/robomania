@@ -20,7 +20,7 @@ from facebook_scraper import get_posts
 from PIL import Image
 from pymongo.database import Database
 
-from . import utils
+from robomania.bot import DEBUG, Robomania
 
 MAX_IMAGES_PER_MESSAGE = 10
 MAX_TOTAL_SIZE_OF_IMAGES = 8 * 1024 * 1024
@@ -98,7 +98,7 @@ class Announcements(commands.Cog):
 
     last_checked = datetime.datetime(1, 1, 1)
     target_channel: disnake.TextChannel
-    DOWNLOAD_PAGE_LIMIT = 4
+    DOWNLOAD_PAGE_LIMIT = 3
     MIN_DELAY_BETWEEN_CHECKS = datetime.timedelta(minutes=25)
     _DISABLE_ANNOUNCEMENTS_LOOP = False
     wrapper = TextWrapper(
@@ -109,7 +109,7 @@ class Announcements(commands.Cog):
     checking_interval_hours = (7, 21)
     check_every_minutes = (0, 30)
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: Robomania):
         self.bot = bot
         self.check_lock = asyncio.Lock()
         if not self._DISABLE_ANNOUNCEMENTS_LOOP:
@@ -125,17 +125,10 @@ class Announcements(commands.Cog):
     def cog_unload(self) -> None:
         self.check_for_announcements.stop()
 
-    @commands.slash_command(name='check')
-    async def command_posts(
-        self,
-        inter: disnake.ApplicationCommandInteraction,
-    ) -> None:
-        await inter.send('Ok', delete_after=5)
-        await self._check_for_announcements()
-
     def enough_time_from_last_check(self) -> bool:
         current_time = datetime.datetime.now()
-        time_since_last_check = current_time - utils.announcements_last_checked
+        time_since_last_check = \
+            current_time - self.bot.announcements_last_checked
 
         return time_since_last_check > self.MIN_DELAY_BETWEEN_CHECKS
 
@@ -145,7 +138,7 @@ class Announcements(commands.Cog):
 
         async with self.check_lock:
             try:
-                utils.announcements_last_checked = datetime.datetime.now()
+                self.bot.announcements_last_checked = datetime.datetime.now()
 
                 posts = await self.download_facebook_posts()
                 posts = await self.get_only_new_posts(posts)
@@ -170,21 +163,22 @@ class Announcements(commands.Cog):
     ])
     async def check_for_announcements(self) -> None:
         if not self.enough_time_from_last_check():
+            logger.info('Not enough time passed since last check.')
             return
 
+        logger.info('Checking for announcements.')
         await self._check_for_announcements()
 
     async def save_posts(self, posts: Posts) -> None:
-        col = utils.get_db('robomania')
+        db = self.bot.get_db('robomania')
 
         await cast(
             Awaitable,
-            col.posts.insert_many(posts, ordered=False)
+            db.posts.insert_many(posts, ordered=False)
         )
 
-    @staticmethod
-    async def get_latest_post_timestamp() -> int:
-        db = utils.get_db('robomania')
+    async def get_latest_post_timestamp(self) -> int:
+        db = self.bot.get_db('robomania')
         col = db.posts
 
         latest_post = await cast(Awaitable, col.aggregate([  # type: ignore
@@ -194,9 +188,12 @@ class Announcements(commands.Cog):
         ]).to_list(1))
 
         if latest_post:
-            return latest_post[0]['timestamp']
+            timestamp = latest_post[0]['timestamp']
+        else:
+            logger.info('No posts in database, using current date and time')
+            timestamp = int(datetime.datetime.now().timestamp())
 
-        raise ValueError('Database not initialized')
+        return timestamp
 
     async def get_only_new_posts(self, posts: Posts) -> Posts:
         latest_timestamp = await self.get_latest_post_timestamp()
@@ -226,7 +223,7 @@ class Announcements(commands.Cog):
         logger.info('Waiting for connection to discord...')
         await self.bot.wait_until_ready()
 
-        client = utils.get_client()
+        client = self.bot.client
         await self.create_collections(client.robomania)
 
         self.target_channel = self.bot.get_channel(self.target_channel_id)
@@ -356,9 +353,10 @@ class Announcements(commands.Cog):
         formatted_url = self.format_posts_url(post_url)
 
         text = self.clean_whitespaces_in_text(text)
+        cleaned_text = disnake.utils.escape_markdown(text)
 
         out = self.split_text(
-            f'{formatted_timestamp}{text}{formatted_url}'
+            f'{formatted_timestamp}{cleaned_text}{formatted_url}'
         )
 
         return out
@@ -392,6 +390,15 @@ class Announcements(commands.Cog):
         for imgs in images:
             await self._send_announcements(None, imgs)
 
+    if DEBUG:
+        @commands.slash_command(name='check')
+        async def command_posts(
+            self,
+            inter: disnake.ApplicationCommandInteraction,
+        ) -> None:
+            await inter.send('Ok', delete_after=5)
+            await self._check_for_announcements()
 
-def setup(bot: commands.Bot) -> None:
+
+def setup(bot: Robomania) -> None:
     bot.add_cog(Announcements(bot))

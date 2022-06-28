@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from disnake import ApplicationCommandInteraction  # type: ignore[attr-defined]
 from disnake.ext import commands
+from robomania.bot import Robomania
 
 # @bot.event
 # async def on_message(message):
@@ -40,5 +41,5 @@ class Tester(commands.Cog):
         )
 
 
-def setup(bot: commands.Bot):
+def setup(bot: Robomania):
     bot.add_cog(Tester(bot))

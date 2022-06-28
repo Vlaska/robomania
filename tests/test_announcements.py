@@ -13,7 +13,7 @@ from mongomock_motor import AsyncMongoMockClient
 from pytest import MonkeyPatch
 from pytest_httpserver import HTTPServer
 from pytest_mock import MockerFixture
-from robomania.cogs import announcements, utils
+from robomania.cogs import announcements
 
 
 class PostFactory:
@@ -60,11 +60,6 @@ def test_enough_time_from_last_check(
     mocker: MockerFixture,
     monkeypatch: MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(
-        utils,
-        'announcements_last_checked',
-        datetime(2009, 4, 13, 12, 6, 10)
-    )
     datetime_mock = mocker.patch('datetime.datetime')
     datetime_mock.now.return_value = now
 
