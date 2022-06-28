@@ -4,6 +4,7 @@ import asyncio
 import datetime
 import io
 import logging
+import os
 import re
 from functools import partial
 from itertools import product
@@ -27,7 +28,7 @@ MAX_TOTAL_SIZE_OF_IMAGES = 8 * 1024 * 1024
 MAX_CHARACTERS_PER_POST = 2000
 
 
-logger = logging.getLogger('disnake')
+logger = logging.getLogger('robomania.announcements')
 
 space_regex = re.compile(' +')
 
@@ -37,6 +38,7 @@ Posts = list[Post]
 
 class PostDownloader:
     DONE = object()
+    FACEBOOK_COOKIES_PATH = os.getenv('FACEBOOK_COOKIES_PATH')
 
     def __init__(
         self,
@@ -79,7 +81,12 @@ class PostDownloader:
     ) -> PostDownloader:
         lazy_posts = await loop.run_in_executor(
             None,
-            partial(get_posts, fanpage, page_limit=pages)
+            partial(
+                get_posts,
+                fanpage,
+                page_limit=pages,
+                cookies=cls.FACEBOOK_COOKIES_PATH
+            )
         )
         return cls(loop, lazy_posts)
 
@@ -101,6 +108,8 @@ class Announcements(commands.Cog):
     DOWNLOAD_PAGE_LIMIT = 3
     MIN_DELAY_BETWEEN_CHECKS = datetime.timedelta(minutes=25)
     _DISABLE_ANNOUNCEMENTS_LOOP = False
+    DOWNSAMPLE_IMAGE_RESOLUTION_BY = [3 / 4, 1 / 2, 1 / 4, 1 / 8, 1 / 16]
+
     wrapper = TextWrapper(
         MAX_CHARACTERS_PER_POST,
         expand_tabs=False,
@@ -132,6 +141,10 @@ class Announcements(commands.Cog):
 
     async def _check_for_announcements(self) -> None:
         if self.check_lock.locked():
+            logger.info(
+                'Trying to check for announcements, while check is'
+                ' already running'
+            )
             return
 
         async with self.check_lock:
@@ -143,8 +156,10 @@ class Announcements(commands.Cog):
                 posts = self.filter_out_only_event_posts(posts)
 
                 if not posts:
+                    logger.info('No new posts found')
                     return
 
+                logger.info(f'Sending {len(posts)} announcements')
                 for post in posts:
                     await self.send_announcements(post)
 
@@ -164,7 +179,6 @@ class Announcements(commands.Cog):
         await self._check_for_announcements()
 
     async def send_announcements(self, post: Post) -> None:
-        logger.info(f'Sending announcement: {post["post_id"]}')
         text: str = post['post_text']
         image_urls: list[str] = post['images']
         timestamp: int = post['timestamp']
@@ -304,6 +318,7 @@ class Announcements(commands.Cog):
                     image_path = Path(urlparse(url).path)
                     out.append((data, image_path.name))
 
+        logger.debug(f'Downloaded {len(out)} images')
         return out
 
     def prepare_images(
@@ -317,6 +332,12 @@ class Announcements(commands.Cog):
             while True:
                 image_data, image_name = images.pop(0)
                 image_size = image_data.getbuffer().nbytes
+
+                if image_size > MAX_TOTAL_SIZE_OF_IMAGES:
+                    try:
+                        image_data = self.reduce_image_size(image_data)
+                    except ValueError:
+                        continue
 
                 if (
                     len(current_image_group) + 1 > MAX_IMAGES_PER_MESSAGE or
@@ -335,6 +356,26 @@ class Announcements(commands.Cog):
             pass
 
         yield current_image_group
+
+    def reduce_image_size(self, image: io.BytesIO) -> io.BytesIO:
+        logger.warning(
+            'Image too big to be send, converting to jpg'
+        )
+        image = self.change_image_format(image)
+        image_size = image.getbuffer().nbytes
+
+        if image_size > MAX_TOTAL_SIZE_OF_IMAGES:
+            for i in self.DOWNSAMPLE_IMAGE_RESOLUTION_BY:
+                _image = self.reduce_image_resolution(image, i)
+
+                if _image.getbuffer().nbytes < MAX_TOTAL_SIZE_OF_IMAGES:
+                    image = _image
+                    break
+            else:
+                logger.error('Image size still too big, skipping')
+                raise ValueError('Image size still too big')
+
+        return image
 
     def reduce_image_resolution(
         self,
@@ -375,7 +416,7 @@ class Announcements(commands.Cog):
         if latest_post:
             timestamp = latest_post[0]['timestamp']
         else:
-            logger.info('No posts in database, using current date and time')
+            logger.warning('No posts in database, using current date and time')
             timestamp = int(datetime.datetime.now().timestamp())
 
         return timestamp
@@ -398,6 +439,29 @@ class Announcements(commands.Cog):
         ) -> None:
             await inter.send('Ok', delete_after=5)
             await self._check_for_announcements()
+    
+        @commands.slash_command(name='remove')
+        async def remove_last_posts(
+            self,
+            inter: disnake.ApplicationCommandInteraction,
+            num: int
+        ) -> None:
+            await inter.send('ok', delete_after=2)
+            posts = self.bot.get_db('robomania').posts
+            timestamp_raw = await cast(Awaitable, posts.aggregate([
+                {'$sort': {'timestamp': -1}},
+                {'$skip': max(num - 1, 0)},
+                {'$limit': 1},
+                {'$project': {'_id': 0, 'timestamp': 1}}
+            ]).to_list(1))
+
+            if not timestamp_raw:
+                return
+
+            timestamp = timestamp_raw[0]['timestamp']
+            await cast(Awaitable, posts.delete_many({
+                'timestamp': {'$gte': timestamp}
+            }))
 
 
 def setup(bot: Robomania) -> None:

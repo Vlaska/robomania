@@ -8,6 +8,7 @@ import disnake
 from disnake.ext import commands
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.database import Database
+from facebook_scraper import _scraper
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -20,6 +21,7 @@ if DEBUG:
 intents = disnake.Intents.default()
 intents.typing = False
 intents.message_content = True
+FACEBOOK_SCRAPER_USER_AGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/99.0.4844.59 Mobile/15E148 Safari/604.1'
 
 
 class Robomania(commands.Bot):
@@ -49,7 +51,10 @@ class Robomania(commands.Bot):
     async def start(self, *args, **kwargs) -> None:
         self.client = AsyncIOMotorClient(self._get_db_connection_url())
 
+        _scraper.set_user_agent(FACEBOOK_SCRAPER_USER_AGENT)
+
         if DEBUG:
+            logger.warning('Running in debug mode')
             self.loop.set_debug(True)
 
         await super().start(*args, **kwargs)
@@ -68,16 +73,16 @@ bot = Robomania(
 )
 
 
-logger = logging.getLogger('disnake')
+logger = logging.getLogger('robomania')
 
 
-def init_logger() -> None:
+def init_logger(logger: logging.Logger, out_file: str) -> None:
     logger.setLevel(logging.DEBUG if DEBUG else logging.INFO)
 
-    handler = logging.FileHandler('robomania.log', encoding='utf-8', mode='w')
+    handler = logging.FileHandler(out_file, encoding='utf-8', mode='a')
     handler.setFormatter(
         logging.Formatter(
-            '%(asctime)s:%(levelname)s:%(pathname)s: %(message)s'
+            '%(asctime)s:%(levelname)s:%(name)s: %(message)s'
         )
     )
     logger.addHandler(handler)
@@ -105,13 +110,14 @@ if DEBUG:
 
 
 def main() -> None:
-    init_logger()
+    init_logger(logger, 'robomania.log')
+    init_logger(logging.getLogger('disnake'), 'disnake.log')
 
     bot.load_extension('robomania.cogs.announcements')
-    bot.run(TOKEN)
-
     if DEBUG:
         bot.load_extension('robomania.cogs.tester')
+
+    bot.run(TOKEN)
 
 
 if __name__ == '__main__':
