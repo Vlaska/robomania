@@ -115,22 +115,20 @@ class Announcements(commands.Cog):
         if not self._DISABLE_ANNOUNCEMENTS_LOOP:
             self.check_for_announcements.start()
 
-    async def create_collections(self, db: Database) -> None:
-        posts = db.posts
-        await cast(
-            Awaitable,
-            posts.create_index([('timestamp', pymongo.DESCENDING)])
+    @tasks.loop(time=[
+        datetime.time(hour=h, minute=m)
+        for h, m in product(
+            range(*checking_interval_hours),
+            check_every_minutes
         )
+    ])
+    async def check_for_announcements(self) -> None:
+        if not self.enough_time_from_last_check():
+            logger.info('Not enough time passed since last check.')
+            return
 
-    def cog_unload(self) -> None:
-        self.check_for_announcements.stop()
-
-    def enough_time_from_last_check(self) -> bool:
-        current_time = datetime.datetime.now()
-        time_since_last_check = \
-            current_time - self.bot.announcements_last_checked
-
-        return time_since_last_check > self.MIN_DELAY_BETWEEN_CHECKS
+        logger.info('Checking for announcements.')
+        await self._check_for_announcements()
 
     async def _check_for_announcements(self) -> None:
         if self.check_lock.locked():
@@ -154,20 +152,105 @@ class Announcements(commands.Cog):
             except Exception:
                 logger.exception('')
 
-    @tasks.loop(time=[
-        datetime.time(hour=h, minute=m)
-        for h, m in product(
-            range(*checking_interval_hours),
-            check_every_minutes
+    @check_for_announcements.before_loop
+    async def init(self) -> None:
+        logger.info('Waiting for connection to discord...')
+        await self.bot.wait_until_ready()
+
+        client = self.bot.client
+        await self.create_collections(client.robomania)
+
+        self.target_channel = self.bot.get_channel(self.target_channel_id)
+        await self._check_for_announcements()
+
+    async def send_announcements(self, post: Post) -> None:
+        logger.info(f'Sending announcement: {post["post_id"]}')
+        text: str = post['post_text']
+        image_urls: list[str] = post['images']
+        timestamp: int = post['timestamp']
+        post_url: str = post['post_url']
+
+        formatted_text = self.format_announcement_text(
+            text, timestamp, post_url
         )
-    ])
-    async def check_for_announcements(self) -> None:
-        if not self.enough_time_from_last_check():
-            logger.info('Not enough time passed since last check.')
+
+        for i in formatted_text[:-1]:
+            await self._send_announcements(i)
+
+        if not image_urls:
+            await self._send_announcements(formatted_text[-1])
             return
 
-        logger.info('Checking for announcements.')
-        await self._check_for_announcements()
+        image_data = await self.download_images(image_urls)
+        images = self.prepare_images(image_data)
+
+        await self._send_announcements(
+            formatted_text[-1],
+            next(images)
+        )
+
+        for imgs in images:
+            await self._send_announcements(None, imgs)
+
+    async def _send_announcements(
+        self,
+        text: str = None,
+        imgs: list[disnake.File] = None
+    ) -> None:
+        await self.target_channel.send(
+            text,
+            files=cast(list[disnake.File], imgs),
+            suppress_embeds=True,
+        )
+
+    def format_announcement_text(
+        self,
+        text: str,
+        timestamp: int,
+        post_url: str,
+    ) -> list[str]:
+        formatted_timestamp = self.format_announcements_date(timestamp)
+        formatted_url = self.format_posts_url(post_url)
+
+        text = self.clean_whitespaces_in_text(text)
+        cleaned_text = disnake.utils.escape_markdown(text)
+
+        out = self.split_text(
+            f'{formatted_timestamp}{cleaned_text}{formatted_url}'
+        )
+
+        return out
+
+    def format_announcements_date(self, timestamp: int) -> str:
+        return f'**Post zamieszczono: <t:{timestamp}:F>**\n'
+
+    def format_posts_url(self, url: str) -> str:
+        return f'\nOryginał: {url}'
+
+    def split_text(
+        self,
+        text: str,
+        char_limit: int = 2000,
+    ) -> list[str]:
+        if len(text) <= char_limit:
+            return [text]
+
+        return self.wrapper.wrap(text)
+
+    @staticmethod
+    def clean_whitespaces_in_text(text: str) -> str:
+        return space_regex.sub(' ', text)
+
+    async def download_facebook_posts(self) -> Posts:
+        loop = self.bot.loop
+        logger.debug('Downloading facebook posts')
+
+        post_iter = await PostDownloader.new(
+            loop,
+            self.fanpage_name,
+            self.DOWNLOAD_PAGE_LIMIT
+        )
+        return await post_iter.get_all()
 
     async def save_posts(self, posts: Posts) -> None:
         db = self.bot.get_db('robomania')
@@ -176,24 +259,6 @@ class Announcements(commands.Cog):
             Awaitable,
             db.posts.insert_many(posts, ordered=False)
         )
-
-    async def get_latest_post_timestamp(self) -> int:
-        db = self.bot.get_db('robomania')
-        col = db.posts
-
-        latest_post = await cast(Awaitable, col.aggregate([  # type: ignore
-            {'$sort': {'timestamp': -1}},
-            {'$limit': 1},
-            {'$project': {'_id': 0, 'timestamp': 1}}
-        ]).to_list(1))
-
-        if latest_post:
-            timestamp = latest_post[0]['timestamp']
-        else:
-            logger.info('No posts in database, using current date and time')
-            timestamp = int(datetime.datetime.now().timestamp())
-
-        return timestamp
 
     async def get_only_new_posts(self, posts: Posts) -> Posts:
         latest_timestamp = await self.get_latest_post_timestamp()
@@ -218,44 +283,11 @@ class Announcements(commands.Cog):
 
         return list(filter(condition, posts))
 
-    @check_for_announcements.before_loop
-    async def init(self) -> None:
-        logger.info('Waiting for connection to discord...')
-        await self.bot.wait_until_ready()
-
-        client = self.bot.client
-        await self.create_collections(client.robomania)
-
-        self.target_channel = self.bot.get_channel(self.target_channel_id)
-        await self._check_for_announcements()
-
-    async def download_facebook_posts(self) -> Posts:
-        loop = self.bot.loop
-        logger.debug('Downloading facebook posts')
-
-        post_iter = await PostDownloader.new(
-            loop,
-            self.fanpage_name,
-            self.DOWNLOAD_PAGE_LIMIT
-        )
-        return await post_iter.get_all()
-
     @classmethod
     def filter_fields(cls, post: Post) -> Post:
         return {
             k: post[k] for k in cls.fields_to_keep
         }
-
-    async def _send_announcements(
-        self,
-        text: str = None,
-        imgs: list[disnake.File] = None
-    ) -> None:
-        await self.target_channel.send(
-            text,
-            files=cast(list[disnake.File], imgs),
-            suppress_embeds=True,
-        )
 
     async def download_images(
         self,
@@ -273,35 +305,6 @@ class Announcements(commands.Cog):
                     out.append((data, image_path.name))
 
         return out
-
-    def reduce_image_resolution(
-        self,
-        image: io.BytesIO,
-        factor: float
-    ) -> io.BytesIO:
-        out = io.BytesIO()
-        img = Image.open(image)
-        old_x, old_y = img.size
-        new_size = (int(old_x * factor), int(old_y * factor))
-        resized_img = img.resize(new_size, resample=Image.NEAREST)
-        resized_img.save(out, 'jpeg')
-        return out
-
-    def change_image_format(self, image: io.BytesIO) -> io.BytesIO:
-        out = io.BytesIO()
-        img = Image.open(image)
-        img.convert('RGB').save(out, 'jpeg')
-        return out
-
-    def split_text(
-        self,
-        text: str,
-        char_limit: int = 2000,
-    ) -> list[str]:
-        if len(text) <= char_limit:
-            return [text]
-
-        return self.wrapper.wrap(text)
 
     def prepare_images(
         self,
@@ -333,62 +336,59 @@ class Announcements(commands.Cog):
 
         yield current_image_group
 
-    def format_announcements_date(self, timestamp: int) -> str:
-        return f'**Post zamieszczono: <t:{timestamp}:F>**\n'
-
-    def format_posts_url(self, url: str) -> str:
-        return f'\nOryginał: {url}'
-
-    @staticmethod
-    def clean_whitespaces_in_text(text: str) -> str:
-        return space_regex.sub(' ', text)
-
-    def format_announcement_text(
+    def reduce_image_resolution(
         self,
-        text: str,
-        timestamp: int,
-        post_url: str,
-    ) -> list[str]:
-        formatted_timestamp = self.format_announcements_date(timestamp)
-        formatted_url = self.format_posts_url(post_url)
-
-        text = self.clean_whitespaces_in_text(text)
-        cleaned_text = disnake.utils.escape_markdown(text)
-
-        out = self.split_text(
-            f'{formatted_timestamp}{cleaned_text}{formatted_url}'
-        )
-
+        image: io.BytesIO,
+        factor: float
+    ) -> io.BytesIO:
+        out = io.BytesIO()
+        img = Image.open(image)
+        old_x, old_y = img.size
+        new_size = (int(old_x * factor), int(old_y * factor))
+        resized_img = img.resize(new_size, resample=Image.NEAREST)
+        resized_img.save(out, 'jpeg')
         return out
 
-    async def send_announcements(self, post: Post) -> None:
-        logger.info(f'Sending announcement: {post["post_id"]}')
-        text: str = post['post_text']
-        image_urls: list[str] = post['images']
-        timestamp: int = post['timestamp']
-        post_url: str = post['post_url']
+    def change_image_format(self, image: io.BytesIO) -> io.BytesIO:
+        out = io.BytesIO()
+        img = Image.open(image)
+        img.convert('RGB').save(out, 'jpeg')
+        return out
 
-        formatted_text = self.format_announcement_text(
-            text, timestamp, post_url
+    def enough_time_from_last_check(self) -> bool:
+        current_time = datetime.datetime.now()
+        time_since_last_check = \
+            current_time - self.bot.announcements_last_checked
+
+        return time_since_last_check > self.MIN_DELAY_BETWEEN_CHECKS
+
+    async def get_latest_post_timestamp(self) -> int:
+        db = self.bot.get_db('robomania')
+        col = db.posts
+
+        latest_post = await cast(Awaitable, col.aggregate([  # type: ignore
+            {'$sort': {'timestamp': -1}},
+            {'$limit': 1},
+            {'$project': {'_id': 0, 'timestamp': 1}}
+        ]).to_list(1))
+
+        if latest_post:
+            timestamp = latest_post[0]['timestamp']
+        else:
+            logger.info('No posts in database, using current date and time')
+            timestamp = int(datetime.datetime.now().timestamp())
+
+        return timestamp
+
+    def cog_unload(self) -> None:
+        self.check_for_announcements.stop()
+
+    async def create_collections(self, db: Database) -> None:
+        posts = db.posts
+        await cast(
+            Awaitable,
+            posts.create_index([('timestamp', pymongo.DESCENDING)])
         )
-
-        for i in formatted_text[:-1]:
-            await self._send_announcements(i)
-
-        if not image_urls:
-            await self._send_announcements(formatted_text[-1])
-            return
-
-        image_data = await self.download_images(image_urls)
-        images = self.prepare_images(image_data)
-
-        await self._send_announcements(
-            formatted_text[-1],
-            next(images)
-        )
-
-        for imgs in images:
-            await self._send_announcements(None, imgs)
 
     if DEBUG:
         @commands.slash_command(name='check')
