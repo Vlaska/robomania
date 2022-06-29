@@ -336,6 +336,7 @@ class Announcements(commands.Cog):
                 if image_size > MAX_TOTAL_SIZE_OF_IMAGES:
                     try:
                         image_data = self.reduce_image_size(image_data)
+                        image_size = image_data.getbuffer().nbytes
                     except ValueError:
                         continue
 
@@ -359,7 +360,7 @@ class Announcements(commands.Cog):
 
     def reduce_image_size(self, image: io.BytesIO) -> io.BytesIO:
         logger.warning(
-            'Image too big to be send, converting to jpg'
+            'Image too big to be send, convertingO to jpg'
         )
         image = self.change_image_format(image)
         image_size = image.getbuffer().nbytes
@@ -386,7 +387,7 @@ class Announcements(commands.Cog):
         img = Image.open(image)
         old_x, old_y = img.size
         new_size = (int(old_x * factor), int(old_y * factor))
-        resized_img = img.resize(new_size, resample=Image.NEAREST)
+        resized_img = img.resize(new_size)
         resized_img.save(out, 'jpeg')
         return out
 

@@ -23,7 +23,7 @@ class PostFactory:
         self.post_id = fake.credit_card_number()
         self.post_url = fake.uri()
         self.likes = 15
-        img_count = randint(0, 5)
+        img_count = randint(1, 5)
         self.images_descriptions = fake.paragraphs(nb=img_count)
         self.images = [fake.image_url() for _ in range(img_count)]
         self.__dict__['with'] = []
@@ -98,14 +98,8 @@ async def test_download_images(
     'sizes,result',
     [
         [[1024, 6000], [2]],
-        pytest.param(
-            [1024 * 9], [1],
-            marks=[pytest.mark.xfail(reason='not implemented')]
-        ),
-        pytest.param(
-            [1024 * 9, 512], [1, 1],
-            marks=[pytest.mark.xfail(reason='not implemented')]
-        ),
+        [[1024 * 9, 512], [1]],
+        [[1024 * 9, 8000, 512], [1, 1]],
         [[100] * 12, [10, 2]],
         [[8000, 10, 500], [2, 1]],
         [[500, 7800, 200], [1, 2]],
@@ -126,8 +120,10 @@ def test_prepare_images(
         side_effect=sizes
     )
 
-    out = list(anno.prepare_images([(bytesio_mock, 'test.png')] * len(sizes)))
-    print(out)
+    reduce_image_size_mock = mocker.patch.object(anno, 'reduce_image_size')
+    reduce_image_size_mock.return_value = bytesio_mock
+
+    out = list(anno.prepare_images([(bytesio_mock, 'test.png')] * sum(result)))
     assert list(map(len, out)) == result
 
 
@@ -329,7 +325,7 @@ async def test_check_for_announcements(
     download_facebook_posts_mock.assert_called_once()
     get_only_new_posts_mock.assert_called_once_with(posts)
     filter_out_only_event_posts_mock.assert_called_once_with(filtered_posts)
-    
+
     if new_posts:
         assert send_announcements_mock.call_args_list == [
             mocker.call(filtered_out_posts[0]),
