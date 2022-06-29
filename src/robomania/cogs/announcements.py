@@ -416,8 +416,8 @@ class Announcements(commands.Cog):
         if latest_post:
             timestamp = latest_post[0]['timestamp']
         else:
-            logger.warning('No posts in database, using current date and time')
-            timestamp = int(datetime.datetime.now().timestamp())
+            logger.warning('No posts in database, using 0.')
+            timestamp = 0
 
         return timestamp
 
