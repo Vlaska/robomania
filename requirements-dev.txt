@@ -1,0 +1,12 @@
+-r requirements.txt
+autopep8
+flake8
+pytest
+mongomock-motor
+Faker
+isort
+mypy
+pytest-asyncio
+pytest-httpserver
+pytest-mock
+pytest-dotenv

@@ -1,3 +1,37 @@
+[project]
+name = "robomania"
+version = "0.0.1"
+description = "Bot for use on Domeq Krk discord server"
+requires-python = ">=3.10"
+dependencies = [
+    "disnake == 2.5.1",
+    "python-dotenv == 0.20.0",
+    "facebook-scraper == 0.2.56",
+    "motor[srv] == 3.0.0",
+    "Pillow == 9.1.1",
+    "pytesseract == 0.3.9",
+    "aiohttp == 3.8.1",
+    "pymongo == 4.1.1",
+]
+    
+[project.optional-dependencies]
+dev = [
+    "autopep8",
+    "flake8",
+    "pytest",
+    "mongomock-motor",
+    "Faker",
+    "isort",
+    "mypy",
+    "pytest-asyncio",
+    "pytest-httpserver",
+    "pytest-mock",
+    "pytest-dotenv",
+]
+
+[build-system]
+requires = ["setuptools >= 58.1"]
+
 [tool.pytest.ini_options]
 testpaths = [
     "tests",

@@ -1,14 +1,15 @@
 from __future__ import annotations
-from datetime import datetime
-import os
+
 import logging
-from dotenv import load_dotenv
+import os
+from datetime import datetime
 
 import disnake
 from disnake.ext import commands
+from dotenv import load_dotenv
+from facebook_scraper import _scraper
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.database import Database
-from facebook_scraper import _scraper
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
