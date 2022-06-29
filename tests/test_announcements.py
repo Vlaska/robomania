@@ -4,8 +4,8 @@ import io
 from datetime import datetime
 from random import randint
 from typing import cast
-import PIL
 
+import PIL
 import pytest
 from disnake.ext.commands import Bot as DisBot  # type: ignore[attr-defined]
 from faker import Faker
@@ -13,6 +13,7 @@ from mongomock_motor import AsyncMongoMockClient
 from pytest import MonkeyPatch
 from pytest_httpserver import HTTPServer
 from pytest_mock import MockerFixture
+
 from robomania.cogs import announcements
 
 

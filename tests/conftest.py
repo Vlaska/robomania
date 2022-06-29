@@ -1,9 +1,10 @@
 from __future__ import annotations
+
+import asyncio
 from datetime import datetime
 from typing import Any
 
 import pytest
-import asyncio
 from mongomock_motor import AsyncMongoMockClient
 
 

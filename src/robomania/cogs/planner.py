@@ -1,9 +1,10 @@
 from __future__ import annotations
+
 from pathlib import Path
 
 import pytesseract as tes
 from disnake.ext import commands
-from PIL import Image, ImageOps, ImageDraw
+from PIL import Image, ImageDraw, ImageOps
 
 THRESHOLD = 1
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from disnake import ApplicationCommandInteraction  # type: ignore[attr-defined]
 from disnake.ext import commands
+
 from robomania.bot import Robomania
 
 # @bot.event

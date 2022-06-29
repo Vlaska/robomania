@@ -440,7 +440,7 @@ class Announcements(commands.Cog):
         ) -> None:
             await inter.send('Ok', delete_after=5)
             await self._check_for_announcements()
-    
+
         @commands.slash_command(name='remove')
         async def remove_last_posts(
             self,
