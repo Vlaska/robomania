@@ -13,9 +13,7 @@ class Planner:
     def process_img(self, img: Image.Image) -> Image.Image:
         grayscale = img.convert('L')
         inverted = ImageOps.invert(grayscale)
-        threshold = inverted.point(
-            lambda x: 255 if x > THRESHOLD else 0
-        )
+        threshold = inverted.point(lambda x: 255 if x > THRESHOLD else 0)
         high_contrast = threshold.convert('RGB')
         ImageDraw.Draw(high_contrast).rectangle(
             ((650, 0), (999, 200)),
