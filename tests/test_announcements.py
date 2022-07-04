@@ -109,7 +109,7 @@ async def test_download_images(
 def test_prepare_images(
     anno: announcements.Announcements,
     sizes: list[int],
-    result: list[int] | None,
+    result: list[int],
     mocker: MockerFixture,
     monkeypatch: MonkeyPatch
 ) -> None:

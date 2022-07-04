@@ -1,6 +1,7 @@
+# type: ignore[attr-defined]
 from __future__ import annotations
 
-from disnake import ApplicationCommandInteraction  # type: ignore[attr-defined]
+from disnake import ApplicationCommandInteraction, Embed
 from disnake.ext import commands
 
 from robomania.bot import Robomania
@@ -26,11 +27,7 @@ class Tester(commands.Cog):
         958823316850880512,  # Test server
     ])
     @commands.is_owner()
-    async def purge(
-        self,
-        inter: ApplicationCommandInteraction,
-        messages: int
-    ):
+    async def purge(self, inter: ApplicationCommandInteraction, messages: int):
         await inter.response.defer()
         deleted = await inter.channel.purge(
             limit=messages,
@@ -40,6 +37,22 @@ class Tester(commands.Cog):
             f'Deleted {len(deleted)} messages.',
             delete_after=5
         )
+
+    @commands.slash_command()
+    @commands.is_owner()
+    async def reload(
+        self,
+        inter: ApplicationCommandInteraction,
+        extension: str
+    ):
+        self.bot.reload_extension(f'cogs.{extension}')
+
+        embed = Embed(
+            title='Reload',
+            description=f'{extension} successfully reloaded',
+            color=0xFF00C8,
+        )
+        await inter.send(embed=embed)
 
 
 def setup(bot: Robomania):

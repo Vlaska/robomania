@@ -2,14 +2,21 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime
+from io import StringIO
 from typing import Any
 
 import pytest
 from mongomock_motor import AsyncMongoMockClient
 
+from robomania.config import Config
+
+configuration = StringIO('''DEBUG=1''')
+
 
 class _Bot:
     loop = asyncio.new_event_loop()
+    config = Config
+    Config.load_env('', stream=configuration)
 
     def __init__(self, client):
         self.client = client

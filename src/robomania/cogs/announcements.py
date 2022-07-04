@@ -1,10 +1,10 @@
+# type: ignore[name-defined]
 from __future__ import annotations
 
 import asyncio
 import datetime
 import io
 import logging
-import os
 import re
 from functools import partial
 from itertools import product
@@ -21,7 +21,8 @@ from facebook_scraper import get_posts
 from PIL import Image
 from pymongo.database import Database
 
-from robomania.bot import DEBUG, Robomania
+from robomania.bot import Robomania
+from robomania.config import Config
 
 MAX_IMAGES_PER_MESSAGE = 10
 MAX_TOTAL_SIZE_OF_IMAGES = 8 * 1024 * 1024
@@ -38,7 +39,6 @@ Posts = list[Post]
 
 class PostDownloader:
     DONE = object()
-    FACEBOOK_COOKIES_PATH = os.getenv('FACEBOOK_COOKIES_PATH')
 
     def __init__(
         self,
@@ -85,7 +85,7 @@ class PostDownloader:
                 get_posts,
                 fanpage,
                 page_limit=pages,
-                cookies=cls.FACEBOOK_COOKIES_PATH
+                cookies=Config.facebook_cookies_path,
             )
         )
         return cls(loop, lazy_posts)
@@ -100,8 +100,6 @@ class Announcements(commands.Cog):
         'post_url',
     ]
     fanpage_name = 'domeq.krk'
-
-    target_channel_id = 958823316850880515  # Trash - general
 
     last_checked = datetime.datetime(1, 1, 1)
     target_channel: disnake.TextChannel
@@ -121,6 +119,9 @@ class Announcements(commands.Cog):
     def __init__(self, bot: Robomania):
         self.bot = bot
         self.check_lock = asyncio.Lock()
+
+        self.target_channel_id = self.bot.config.announcements_target_channel
+
         if not self._DISABLE_ANNOUNCEMENTS_LOOP:
             self.check_for_announcements.start()
 
@@ -198,10 +199,7 @@ class Announcements(commands.Cog):
         image_data = await self.download_images(image_urls)
         images = self.prepare_images(image_data)
 
-        await self._send_announcements(
-            formatted_text[-1],
-            next(images)
-        )
+        await self._send_announcements(formatted_text[-1], next(images))
 
         for imgs in images:
             await self._send_announcements(None, imgs)
@@ -269,20 +267,16 @@ class Announcements(commands.Cog):
     async def save_posts(self, posts: Posts) -> None:
         db = self.bot.get_db('robomania')
 
-        await cast(
-            Awaitable,
-            db.posts.insert_many(posts, ordered=False)
-        )
+        await cast(Awaitable, db.posts.insert_many(posts, ordered=False))
 
     async def get_only_new_posts(self, posts: Posts) -> Posts:
         latest_timestamp = await self.get_latest_post_timestamp()
         logger.debug('Filtering out old posts')
 
         return sorted(
-            filter(
-                lambda x: x['timestamp'] > latest_timestamp,
-                posts),
-            key=lambda x: x['timestamp'])
+            filter(lambda x: x['timestamp'] > latest_timestamp, posts),
+            key=lambda x: x['timestamp'],
+        )
 
     @staticmethod
     def _post_contains_event(post: Post) -> bool:
@@ -290,18 +284,13 @@ class Announcements(commands.Cog):
 
     def filter_out_only_event_posts(self, posts: Posts) -> Posts:
         def condition(x: Post) -> bool:
-            return not (
-                not x['post_text'] and
-                self._post_contains_event(x)
-            )
+            return not (not x['post_text'] and self._post_contains_event(x))
 
         return list(filter(condition, posts))
 
     @classmethod
     def filter_fields(cls, post: Post) -> Post:
-        return {
-            k: post[k] for k in cls.fields_to_keep
-        }
+        return {k: post[k] for k in cls.fields_to_keep}
 
     async def download_images(
         self,
@@ -359,9 +348,7 @@ class Announcements(commands.Cog):
         yield current_image_group
 
     def reduce_image_size(self, image: io.BytesIO) -> io.BytesIO:
-        logger.warning(
-            'Image too big to be send, convertingO to jpg'
-        )
+        logger.warning('Image too big to be send, converting to jpg')
         image = self.change_image_format(image)
         image_size = image.getbuffer().nbytes
 
@@ -432,7 +419,7 @@ class Announcements(commands.Cog):
             posts.create_index([('timestamp', pymongo.DESCENDING)])
         )
 
-    if DEBUG:
+    if Config.debug:
         @commands.slash_command(name='check')
         async def command_posts(
             self,
