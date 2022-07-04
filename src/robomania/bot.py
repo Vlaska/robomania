@@ -96,8 +96,8 @@ async def on_ready():
     logger.info('We have logged in as "{0.user}"'.format(bot))
 
 
-def main() -> None:
-    bot.load_config()
+def main(config_path: str | Path = '.env') -> None:
+    bot.load_config(config_path)
 
     init_logger(logger, 'robomania.log')
     init_logger(logging.getLogger('disnake'), 'disnake.log')
