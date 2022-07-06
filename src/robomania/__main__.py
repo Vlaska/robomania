@@ -1,8 +1,10 @@
 from __future__ import annotations
+
 from pathlib import Path
 
-from robomania.bot import main
 import click
+
+from robomania.bot import main
 
 
 @click.command()
