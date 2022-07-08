@@ -17,23 +17,28 @@ jobs:
     runs-on: ["self-hosted", "Linux"]
     environment: deployment
     env:
-      VENV: ${{ format('{0}/bin/', secrets.DEPLOYMENT_FOLDER) }}
-      ROBOMANIA_CWD: ~/.robomania
-      ROBOMANIA_PY: ${{ format('{0}python', env.VENV) }}
+      VENV: "${{ secrets.HOME }}/.robomania/.venv"
+      ROBOMANIA_CWD: "${{ secrets.HOME }}/.robomania"
+      ROBOMANIA_PY: "${{ secrets.HOME }}/.robomania/.venv/bin/python"
 
     steps:
       - name: "Checkout"
-        uses: actions/checkout@3
+        uses: actions/checkout@v3
       - name: "Create virtual environment"
+        shell: pwsh
         run: |
-          [ ! -d ${{ secrets.DEPLOYMENT_FOLDER }} ] && virutalenv ${{ secrets.DEPLOYMENT_FOLDER }}
+          cd ${{ env.ROBOMANIA_CWD }}
+          if (-not(Test-Path -Path .venv)) {
+            virtualenv .venv
+          }
       - name: "Build bot"
         run: |
+          pip install build
           rm -rf dist
           python3 -m build
       - name: "Install bot"
         run: |
-          ${{ format("{0}/pip", env.ENV) }} install $(find ~+ -name '*.whl')
+          ${{ env.VENV }}/bin/pip install $(find ~+ -name '*.whl')
       - name: Run as service
-        shell: powershell
+        shell: pwsh
         run: ./setup.ps1

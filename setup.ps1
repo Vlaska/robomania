@@ -5,6 +5,7 @@ After=network.target
 
 [Service]
 User={0}
+StartLimitBurst=0
 WorkingDirectory={1}
 ExecStart={2} -m robomania -c .env
 Restart=always
