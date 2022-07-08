@@ -19,7 +19,7 @@ jobs:
     env:
       VENV: ${{ format('{0}/bin/', secrets.DEPLOYMENT_FOLDER) }}
       ROBOMANIA_CWD: ~/.robomania
-      ROBOMANIA_PY: ${{ format('{0}python', env.VENV) }}
+      ROBOMANIA_PY: "$VENV/python"
 
     steps:
       - name: "Checkout"
