@@ -27,9 +27,12 @@ jobs:
       - name: "Checkout"
         uses: actions/checkout@v3
       - name: "Create virtual environment"
+        shell: powershell
         run: |
           cd ${{ env.ROBOMANIA_CWD }}
-          [ ! -d .venv ] && virtualenv .venv
+          if (-not(Test-Path -Path .venv)) {
+            virtualenv .venv
+          }
       - name: "Build bot"
         run: |
           ${{ env.VENV_PIP }} install build
