@@ -33,7 +33,7 @@ jobs:
           python3 -m build
       - name: "Install bot"
         run: |
-          ${{ format("{0}/pip", env.VENV) }} install $(find ~+ -name '*.whl')
+          $VENV/pip install $(find ~+ -name '*.whl')
       - name: Run as service
         shell: powershell
         run: ./setup.ps1
