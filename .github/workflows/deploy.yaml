@@ -19,7 +19,7 @@ jobs:
     env:
       VENV: "~/.robomania/.venv"
       VENV_PY: "$VENV/bin/python"
-      VENV_PIP: "$/bin/pip"
+      VENV_PIP: "$VENV/bin/pip"
       ROBOMANIA_CWD: ~/.robomania
       ROBOMANIA_PY: "$VENV_PY"
 
