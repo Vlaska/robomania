@@ -27,7 +27,7 @@ jobs:
       - name: "Checkout"
         uses: actions/checkout@v3
       - name: "Create virtual environment"
-        shell: powershell
+        shell: pwsh
         run: |
           cd ${{ env.ROBOMANIA_CWD }}
           if (-not(Test-Path -Path .venv)) {
@@ -42,5 +42,5 @@ jobs:
         run: |
           ${{ env.VENV_PIP }} install $(find ~+ -name '*.whl')
       - name: Run as service
-        shell: powershell
+        shell: pwsh
         run: ./setup.ps1
