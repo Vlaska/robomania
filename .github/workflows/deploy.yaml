@@ -1,0 +1,39 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # test:
+  #   runs-on: ["self-hosted"]
+  #   steps:
+  #     - name: "Run tests"
+  deploy:
+    runs-on: ["self-hosted", "Linux"]
+    environment: deployment
+    env:
+      VENV: ${{ format('{0}/bin/', secrets.DEPLOYMENT_FOLDER) }}
+      ROBOMANIA_CWD: ~/.robomania
+      ROBOMANIA_PY: ${{ format('{0}python', env.VENV) }}
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@3
+      - name: "Create virtual environment"
+        run: |
+          [ ! -d ${{ secrets.DEPLOYMENT_FOLDER }} ] && virutalenv ${{ secrets.DEPLOYMENT_FOLDER }}
+      - name: "Build bot"
+        run: |
+          rm -rf dist
+          python3 -m build
+      - name: "Install bot"
+        run: |
+          ${{ format("{0}/pip", env.ENV) }} install $(find ~+ -name '*.whl')
+      - name: Run as service
+        shell: powershell
+        run: ./setup.ps1

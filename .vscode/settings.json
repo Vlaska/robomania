@@ -6,6 +6,7 @@
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "yaml.schemas": {
-        "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json": "/mongo.yaml"
+        "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json": "mongo.yaml",
+        "https://json.schemastore.org/github-workflow.json": ".github/workflows/deploy.yaml"
     }
 }
