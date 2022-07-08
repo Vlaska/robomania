@@ -17,10 +17,10 @@ jobs:
     runs-on: ["self-hosted", "Linux"]
     environment: deployment
     env:
-      VENV: "~/.robomania/.venv"
+      VENV: "${{ secrets.HOME }}/.robomania/.venv"
       VENV_PY: "$VENV/bin/python"
       VENV_PIP: "$VENV/bin/pip"
-      ROBOMANIA_CWD: ~/.robomania
+      ROBOMANIA_CWD: "${{ secrets.HOME }}/.robomania"
       ROBOMANIA_PY: "$VENV_PY"
 
     steps:
