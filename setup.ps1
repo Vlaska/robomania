@@ -28,11 +28,11 @@ if (-not(Test-Path -Path $service_path -PathType Leaf)) {
 
         sudo chmod 644 $service_path
         sudo systemctl daemon-reload
-        # sudo systemctl enable robomania
-        # sudo systemctl start robomania
+        sudo systemctl enable robomania
+        sudo systemctl start robomania
     } catch {
         throw $_.Exception.Message
     }
 } else {
-    # sudo systemctl restart robomania
+    sudo systemctl restart robomania
 }
