@@ -29,7 +29,7 @@ jobs:
       - name: "Create virtual environment"
         run: |
           cd ${{ env.ROBOMANIA_CWD }}
-          [ ! -d ${{ env.VENV }} ] && virtualenv .venv
+          [ ! -d .venv ] && virtualenv .venv
       - name: "Build bot"
         run: |
           ${{ env.VENV_PIP }} install build
