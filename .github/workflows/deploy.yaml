@@ -36,6 +36,10 @@ jobs:
           pip install build
           rm -rf dist
           python3 -m build
+      - name: "Turn off bot"
+        if: ${{ always() }}
+        run: |
+          systemctl stop robomania
       - name: "Install bot"
         run: |
           ${{ env.VENV }}/bin/pip install $(find ~+ -name '*.whl')
