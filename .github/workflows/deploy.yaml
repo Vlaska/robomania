@@ -18,8 +18,10 @@ jobs:
     environment: deployment
     env:
       VENV: "~/.robomania/.venv"
+      VENV_PY: "$VENV/bin/python"
+      VENV_PIP: "$/bin/pip"
       ROBOMANIA_CWD: ~/.robomania
-      ROBOMANIA_PY: "$VENV/bin/python"
+      ROBOMANIA_PY: "$VENV_PY"
 
     steps:
       - name: "Checkout"
@@ -29,12 +31,12 @@ jobs:
           [ ! -d $VENV ] && virtualenv $VENV
       - name: "Build bot"
         run: |
-          pip install build
+          $VENV_PIP install build
           rm -rf dist
-          python3 -m build
+          $VENV_PY -m build
       - name: "Install bot"
         run: |
-          $VENV/bin/pip install $(find ~+ -name '*.whl')
+          $VENV_PIP install $(find ~+ -name '*.whl')
       - name: Run as service
         shell: powershell
         run: ./setup.ps1
