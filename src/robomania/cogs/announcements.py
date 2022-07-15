@@ -6,7 +6,7 @@ import datetime
 import io
 import logging
 import re
-from functools import partial
+from functools import partial, cached_property
 from itertools import product
 from pathlib import Path
 from textwrap import TextWrapper
@@ -33,8 +33,8 @@ logger = logging.getLogger('robomania.announcements')
 
 space_regex = re.compile(' +')
 
-Post = dict[str, Any]
-Posts = list[Post]
+PostType = dict[str, Any]
+Posts = list[PostType]
 
 
 class PostDownloader:
@@ -43,7 +43,7 @@ class PostDownloader:
     def __init__(
         self,
         loop: asyncio.AbstractEventLoop,
-        lazy_posts: Iterator[Post]
+        lazy_posts: Iterator[PostType]
     ) -> None:
         self._lazy_posts = lazy_posts
         self.loop = loop
@@ -51,8 +51,8 @@ class PostDownloader:
     def __aiter__(self):
         return self
 
-    async def __anext__(self) -> Post:
-        out: Post | object = await self.loop.run_in_executor(
+    async def __anext__(self) -> PostType:
+        out: PostType | object = await self.loop.run_in_executor(
             None,
             next,
             self._lazy_posts,
@@ -62,7 +62,7 @@ class PostDownloader:
         if out is self.DONE:
             raise StopAsyncIteration
 
-        return cast(Post, out)
+        return cast(PostType, out)
 
     async def get_all(self) -> Posts:
         out = []
@@ -89,6 +89,20 @@ class PostDownloader:
             )
         )
         return cls(loop, lazy_posts)
+
+
+class Post:
+    text: str
+
+    def __init__(self, post: PostType) -> None:
+        pass
+
+    def save(self) -> None:
+        pass
+
+    @cached_property
+    def formatted_text(self) -> str:
+        pass
 
 
 class Announcements(commands.Cog):
@@ -179,7 +193,7 @@ class Announcements(commands.Cog):
         self.target_channel = self.bot.get_channel(self.target_channel_id)
         await self._check_for_announcements()
 
-    async def send_announcements(self, post: Post) -> None:
+    async def send_announcements(self, post: PostType) -> None:
         text: str = post['post_text']
         image_urls: list[str] = post['images']
         timestamp: int = post['timestamp']
@@ -279,17 +293,17 @@ class Announcements(commands.Cog):
         )
 
     @staticmethod
-    def _post_contains_event(post: Post) -> bool:
+    def _post_contains_event(post: PostType) -> bool:
         return any(i['name'] == 'event' for i in post['with'])
 
     def filter_out_only_event_posts(self, posts: Posts) -> Posts:
-        def condition(x: Post) -> bool:
+        def condition(x: PostType) -> bool:
             return not (not x['post_text'] and self._post_contains_event(x))
 
         return list(filter(condition, posts))
 
     @classmethod
-    def filter_fields(cls, post: Post) -> Post:
+    def filter_fields(cls, post: PostType) -> PostType:
         return {k: post[k] for k in cls.fields_to_keep}
 
     async def download_images(
