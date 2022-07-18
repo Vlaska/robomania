@@ -2,15 +2,17 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import datetime
 import io
 import logging
 import re
-from functools import partial, cached_property
+from collections.abc import Generator
+from functools import cached_property, partial
 from itertools import product
 from pathlib import Path
 from textwrap import TextWrapper
-from typing import Any, Awaitable, Generator, Iterator, cast
+from typing import Any, Awaitable, Iterator, cast
 from urllib.parse import urlparse
 
 import aiohttp
@@ -91,6 +93,68 @@ class PostDownloader:
         return cls(loop, lazy_posts)
 
 
+class PostImage:
+    _data: io.BytesIO
+    image: io.BytesIO
+    DOWNSAMPLE_IMAGE_RESOLUTION_BY = [3 / 4, 1 / 2, 1 / 4, 1 / 8, 1 / 16]
+
+    def __init__(self, data: io.BytesIO, name: str) -> None:
+        self._data = data
+        self.name = name
+        self.image = data
+
+    def _change_image_format(self) -> None:
+        self.image = io.BytesIO()
+
+        with self.rewindable_buffer(self._data, self.image) as (data, image):
+            img = Image.open(data)
+            img.convert('RGB').save(image, 'jpeg')
+
+    def _reduce_image_resolution(
+        self,
+        factor: float
+    ) -> io.BytesIO:
+        self.image = io.BytesIO()
+
+        with self.rewindable_buffer(self._data, self.image) as (data, image):
+            img = Image.open(data)
+            old_x, old_y = img.size
+            new_size = (int(old_x * factor), int(old_y * factor))
+            resized_img = img.resize(new_size)
+            resized_img.save(image, 'jpeg')
+
+    def reduce_size(self, max_size: int) -> None:
+        self._change_image_format()
+
+        if self.size <= max_size:
+            return
+
+        for factor in self.DOWNSAMPLE_IMAGE_RESOLUTION_BY:
+            self._reduce_image_resolution(factor)
+
+            if self.size <= max_size:
+                break
+        else:
+            raise ValueError(
+                'Could not reduce image size below given size constraint.'
+            )
+
+    @contextlib.contextmanager
+    def rewindable_buffer(
+        self,
+        *args: io.BytesIO
+    ) -> Generator[tuple[io.BytesIO, ...], None, None]:
+        try:
+            yield args
+        finally:
+            for buffer in args:
+                buffer.seek(0)
+
+    @property
+    def size(self) -> int:
+        return self.image.getbuffer().nbytes
+
+
 class Post:
     text: str
 
@@ -115,12 +179,10 @@ class Announcements(commands.Cog):
     ]
     fanpage_name = 'domeq.krk'
 
-    last_checked = datetime.datetime(1, 1, 1)
     target_channel: disnake.TextChannel
     DOWNLOAD_PAGE_LIMIT = 3
     MIN_DELAY_BETWEEN_CHECKS = datetime.timedelta(minutes=25)
     _DISABLE_ANNOUNCEMENTS_LOOP = False
-    DOWNSAMPLE_IMAGE_RESOLUTION_BY = [3 / 4, 1 / 2, 1 / 4, 1 / 8, 1 / 16]
 
     wrapper = TextWrapper(
         MAX_CHARACTERS_PER_POST,
@@ -315,88 +377,51 @@ class Announcements(commands.Cog):
             for url in images:
                 async with session.get(url) as resp:
                     if resp.status != 200:
-                        print('problem with image download')
+                        logger.warning('Problem with image download.')
 
                     data = io.BytesIO(await resp.read())
                     image_path = Path(urlparse(url).path)
-                    out.append((data, image_path.name))
+                    out.append(PostImage(data, image_path.name))
 
         logger.debug(f'Downloaded {len(out)} images')
         return out
 
     def prepare_images(
         self,
-        images: list[tuple[io.BytesIO, str]]
+        images: list[PostImage]
     ) -> Generator[list[disnake.File], None, None]:
         current_image_group: list[disnake.File] = []
         current_total_size = 0
 
         try:
             while True:
-                image_data, image_name = images.pop(0)
-                image_size = image_data.getbuffer().nbytes
+                image = images.pop(0)
 
-                if image_size > MAX_TOTAL_SIZE_OF_IMAGES:
+                if image.size > MAX_TOTAL_SIZE_OF_IMAGES:
+                    logger.info('Image too big, trying to reduce size.')
                     try:
-                        image_data = self.reduce_image_size(image_data)
-                        image_size = image_data.getbuffer().nbytes
+                        image.reduce_size(MAX_TOTAL_SIZE_OF_IMAGES)
                     except ValueError:
+                        logger.error('Image still too big, skipping.')
                         continue
 
                 if (
                     len(current_image_group) + 1 > MAX_IMAGES_PER_MESSAGE or
-                    image_size + current_total_size > MAX_TOTAL_SIZE_OF_IMAGES
+                    image.size + current_total_size > MAX_TOTAL_SIZE_OF_IMAGES
                 ):
                     yield current_image_group
 
                     current_image_group = []
                     current_total_size = 0
 
-                current_total_size += image_size
+                current_total_size += image.size
                 current_image_group.append(
-                    disnake.File(image_data, image_name)
+                    disnake.File(image.image, image.name)
                 )
         except IndexError:
             pass
 
         yield current_image_group
-
-    def reduce_image_size(self, image: io.BytesIO) -> io.BytesIO:
-        logger.warning('Image too big to be send, converting to jpg')
-        image = self.change_image_format(image)
-        image_size = image.getbuffer().nbytes
-
-        if image_size > MAX_TOTAL_SIZE_OF_IMAGES:
-            for i in self.DOWNSAMPLE_IMAGE_RESOLUTION_BY:
-                _image = self.reduce_image_resolution(image, i)
-
-                if _image.getbuffer().nbytes < MAX_TOTAL_SIZE_OF_IMAGES:
-                    image = _image
-                    break
-            else:
-                logger.error('Image size still too big, skipping')
-                raise ValueError('Image size still too big')
-
-        return image
-
-    def reduce_image_resolution(
-        self,
-        image: io.BytesIO,
-        factor: float
-    ) -> io.BytesIO:
-        out = io.BytesIO()
-        img = Image.open(image)
-        old_x, old_y = img.size
-        new_size = (int(old_x * factor), int(old_y * factor))
-        resized_img = img.resize(new_size)
-        resized_img.save(out, 'jpeg')
-        return out
-
-    def change_image_format(self, image: io.BytesIO) -> io.BytesIO:
-        out = io.BytesIO()
-        img = Image.open(image)
-        img.convert('RGB').save(out, 'jpeg')
-        return out
 
     def enough_time_from_last_check(self) -> bool:
         current_time = datetime.datetime.now()

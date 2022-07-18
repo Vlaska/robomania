@@ -89,18 +89,18 @@ async def test_download_images(
         httpserver.url_for('/test/emote/kek.jpg'),
     ])
 
-    assert images[0][0].read() == b'OK'
-    assert images[0][1] == 'example.png'
-    assert images[1][0].read() == b'KO'
-    assert images[1][1] == 'kek.jpg'
+    assert images[0].image.read() == b'OK'
+    assert images[0].name == 'example.png'
+    assert images[1].image.read() == b'KO'
+    assert images[1].name == 'kek.jpg'
 
 
 @pytest.mark.parametrize(
     'sizes,result',
     [
         [[1024, 6000], [2]],
-        [[1024 * 9, 512], [1]],
-        [[1024 * 9, 8000, 512], [1, 1]],
+        [[[1024 * 9, 512]], [1]],
+        [[[1024 * 9, 8000], 512], [1, 1]],
         [[100] * 12, [10, 2]],
         [[8000, 10, 500], [2, 1]],
         [[500, 7800, 200], [1, 2]],
@@ -108,7 +108,7 @@ async def test_download_images(
 )
 def test_prepare_images(
     anno: announcements.Announcements,
-    sizes: list[int],
+    sizes: list[int | list[int]],
     result: list[int],
     mocker: MockerFixture,
     monkeypatch: MonkeyPatch
@@ -116,16 +116,30 @@ def test_prepare_images(
     monkeypatch.setattr(announcements, 'MAX_TOTAL_SIZE_OF_IMAGES', 8 * 1024)
     bytesio_mock = mocker.Mock(spec=io.BytesIO)
 
-    get_buffer_mock = bytesio_mock.getbuffer = mocker.Mock(spec=io.BytesIO)
-    type(get_buffer_mock.return_value).nbytes = mocker.PropertyMock(
-        side_effect=sizes
-    )
+    class MockPostImage(announcements.PostImage):
+        image = bytesio_mock
+        name = 'lorem ipsum'
 
-    reduce_image_size_mock = mocker.patch.object(anno, 'reduce_image_size')
-    reduce_image_size_mock.return_value = bytesio_mock
+        def __init__(self, size: int | list[int]) -> None:
+            self.reduced_size = False
 
-    out = list(anno.prepare_images([(bytesio_mock, 'test.png')] * sum(result)))
-    assert list(map(len, out)) == result
+            if isinstance(size, int):
+                self._size = [size, size]
+                self.dont_change_size = True
+            else:
+                self._size = size
+                self.dont_change_size = False
+
+        def reduce_size(self, max_size: int) -> None:
+            assert not self.dont_change_size
+            self.reduced_size = True
+
+        @property
+        def size(self) -> int:
+            return cast(list[int], self._size)[self.reduced_size]
+
+    images = list(map(MockPostImage, sizes))
+    assert list(map(len, anno.prepare_images(images))) == result
 
 
 def test_format_announcements_date(
@@ -205,24 +219,25 @@ def test_change_image_format(
 ) -> None:
     img = faker.image((1000, 1000), 'png')
     png_img = io.BytesIO(img)
+    image = announcements.PostImage(png_img, '')
 
-    jpg_img = anno.change_image_format(png_img)
-    jpg_img.seek(0)
-    assert isinstance(jpg_img, io.BytesIO)
-    assert jpg_img.read(4) == b'\xff\xd8\xff\xe0'
+    image._change_image_format()
+
+    assert isinstance(image.image, io.BytesIO)
+    assert image._data.read(8) == b'\x89PNG\r\n\x1a\n'
+    assert image.image.read(4) == b'\xff\xd8\xff\xe0'
 
 
 def test_change_image_resolution(
     anno: announcements.Announcements,
     faker: Faker,
 ) -> None:
-    img = faker.image((1000, 1000), 'jpeg')
-    og_img = io.BytesIO(img)
+    og_img = faker.image((1000, 1000), 'jpeg')
+    img = announcements.PostImage(io.BytesIO(og_img), '')
 
-    resized_img = anno.reduce_image_resolution(og_img, 0.5)
-    resized_img.seek(0)
-    assert isinstance(resized_img, io.BytesIO)
-    f = PIL.Image.open(resized_img)
+    img._reduce_image_resolution(0.5)
+    assert isinstance(img.image, io.BytesIO)
+    f = PIL.Image.open(img.image)
     assert f.size == (500, 500)
 
 
@@ -284,7 +299,8 @@ async def test_send_announcements(
         ]
 
     send_announcements_mock.assert_called()
-    assert send_announcements_mock.call_args_list == send_announcements_arguments
+    assert send_announcements_mock.call_args_list == \
+        send_announcements_arguments
 
 
 @pytest.mark.parametrize('new_posts', [False, True])
