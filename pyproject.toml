@@ -38,6 +38,8 @@ testpaths = [
     "tests",
 ]
 asyncio_mode = "strict"
+addopts = "--cov=src/robomania --cov-report html"
+
 
 [tool.mypy]
 python_version = "3.10"
@@ -49,3 +51,19 @@ max_line_length = 79
 in-place = true
 recursive = true
 aggressive = 3
+
+[tool.coverage.run]
+source = ["src/robomania"]
+omit = ["src/robomania/cogs/tester.py", "src/robomania/cogs/planner.py"]
+
+[tool.coverage.report]
+skip_empty = true
+exclude_lines = [
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "def __str__",
+    "def __repr__",
+    "pragma: no cover",
+    "@click",
+    "if Config.debug:"
+]

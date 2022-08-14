@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 from datetime import datetime
 from random import randint
-from typing import cast
+from typing import Any, cast
 
 import PIL
 import pytest
@@ -15,9 +15,11 @@ from pytest_httpserver import HTTPServer
 from pytest_mock import MockerFixture
 
 from robomania.cogs import announcements
+from robomania.types import announcement_post, image
+from robomania.types.facebook_post import FacebookPost
 
 
-class PostFactory:
+class PostFactory(dict):
     def __init__(self, fake: Faker) -> None:
         self.timestamp = fake.unix_time()
         self.post_text = fake.paragraphs(nb=10)
@@ -27,11 +29,15 @@ class PostFactory:
         img_count = randint(1, 5)
         self.images_descriptions = fake.paragraphs(nb=img_count)
         self.images = [fake.image_url() for _ in range(img_count)]
-        self.__dict__['with'] = []
+        self['with'] = []
 
     @classmethod
     def bulk(cls, fake: Faker, num: int) -> list[PostFactory]:
         return [cls(fake) for _ in range(num)]
+
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        self[__name] = __value
+        self.__dict__[__name] = __value
 
 
 @pytest.fixture
@@ -59,7 +65,6 @@ def test_enough_time_from_last_check(
     now: datetime,
     result: bool,
     mocker: MockerFixture,
-    monkeypatch: MonkeyPatch,
 ) -> None:
     datetime_mock = mocker.patch('datetime.datetime')
     datetime_mock.now.return_value = now
@@ -84,7 +89,7 @@ async def test_download_images(
         httpserver.url_for('/test/emote/kek.jpg'),
     ])
 
-    images = await anno.download_images([
+    images = await image.DiscordImage.download_images([
         httpserver.url_for('/test/image/example.png'),
         httpserver.url_for('/test/emote/kek.jpg'),
     ])
@@ -107,16 +112,15 @@ async def test_download_images(
     ]
 )
 def test_prepare_images(
-    anno: announcements.Announcements,
     sizes: list[int | list[int]],
     result: list[int],
     mocker: MockerFixture,
     monkeypatch: MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(announcements, 'MAX_TOTAL_SIZE_OF_IMAGES', 8 * 1024)
+    monkeypatch.setattr(image, 'MAX_TOTAL_SIZE_OF_IMAGES', 8 * 1024)
     bytesio_mock = mocker.Mock(spec=io.BytesIO)
 
-    class MockPostImage(announcements.PostImage):
+    class MockDiscordPostImage(image.DiscordImage):
         image = bytesio_mock
         name = 'lorem ipsum'
 
@@ -138,33 +142,29 @@ def test_prepare_images(
         def size(self) -> int:
             return cast(list[int], self._size)[self.reduced_size]
 
-    images = list(map(MockPostImage, sizes))
-    assert list(map(len, anno.prepare_images(images))) == result
+    images = list(map(MockDiscordPostImage, sizes))
+    image_split = list(map(len, MockDiscordPostImage.prepare_images(images)))
+    assert image_split == result
 
 
-def test_format_announcements_date(
-    anno: announcements.Announcements
-) -> None:
-    timestamp = int(datetime.now().timestamp())
-    assert f'<t:{timestamp}:F>' in anno.format_announcements_date(timestamp)
+def test_format_announcements_date(fb_post) -> None:
+    t = announcement_post.AnnouncementPost(fb_post)
+
+    assert f'<t:{fb_post.timestamp}:F>' in t.announcements_date
 
 
 def test_format_announcement_text(
-    anno: announcements.Announcements,
-    faker: Faker,
+    fb_post
 ) -> None:
-    text = faker.text(5000)
+    anno = announcement_post.AnnouncementPost(fb_post, None)
 
-    formatted_text = anno.format_announcement_text(
-        text, faker.unix_time(), faker.uri()
-    )
+    formatted_text = anno.format_text(fb_post.post_text)
 
     assert all(len(i) <= 2000 for i in formatted_text)
 
 
 @pytest.mark.asyncio
 async def test_get_latest_post_timestamp(
-    anno: announcements.Announcements,
     faker: Faker,
     client: AsyncMongoMockClient
 ) -> None:
@@ -180,12 +180,12 @@ async def test_get_latest_post_timestamp(
     posts.append(known_post)
     await collection.insert_many(vars(i) for i in posts)
 
-    assert await anno.get_latest_post_timestamp() == latest_timestamp
+    assert await \
+        FacebookPost.latest_timestamp(client.robomania) == latest_timestamp
 
 
 @pytest.mark.asyncio
 async def test_get_only_new_posts(
-    anno: announcements.Announcements,
     mocker: MockerFixture,
     faker: Faker,
 ) -> None:
@@ -194,46 +194,41 @@ async def test_get_only_new_posts(
     sorted_posts = sorted(posts, key=lambda x: x.timestamp)
     newest_old_post = sorted_posts[5]
 
-    async def _wrapper():
+    async def _wrapper(_):
         return newest_old_post.timestamp
 
-    mocker.patch.object(anno, 'get_latest_post_timestamp', _wrapper)
+    mocker.patch.object(FacebookPost, 'latest_timestamp', _wrapper)
 
-    newest_posts = await anno.get_only_new_posts(list(map(vars, posts)))
+    newest_posts = await FacebookPost.get_only_new_posts(
+        None,
+        list(map(FacebookPost.from_raw, posts))
+    )
 
-    assert newest_posts == list(map(vars, sorted_posts[6:]))
-
-
-def test_filter_fields(
-    anno: announcements.Announcements,
-    faker: Faker,
-) -> None:
-    post = vars(PostFactory(faker))
-
-    assert set(anno.filter_fields(post).keys()) == set(anno.fields_to_keep)
+    assert all(
+        i['timestamp'] == j.timestamp
+        for i, j in zip(map(vars, sorted_posts[6:]), newest_posts)
+    )
 
 
 def test_change_image_format(
-    anno: announcements.Announcements,
     faker: Faker,
 ) -> None:
-    img = faker.image((1000, 1000), 'png')
-    png_img = io.BytesIO(img)
-    image = announcements.PostImage(png_img, '')
+    img_raw = faker.image((1000, 1000), 'png')
+    png_img = io.BytesIO(img_raw)
+    img = image.DiscordImage(png_img, '')
 
-    image._change_image_format()
+    img._change_image_format()
 
-    assert isinstance(image.image, io.BytesIO)
-    assert image._data.read(8) == b'\x89PNG\r\n\x1a\n'
-    assert image.image.read(4) == b'\xff\xd8\xff\xe0'
+    assert isinstance(img.image, io.BytesIO)
+    assert img._data.read(8) == b'\x89PNG\r\n\x1a\n'
+    assert img.image.read(4) == b'\xff\xd8\xff\xe0'
 
 
 def test_change_image_resolution(
-    anno: announcements.Announcements,
     faker: Faker,
 ) -> None:
     og_img = faker.image((1000, 1000), 'jpeg')
-    img = announcements.PostImage(io.BytesIO(og_img), '')
+    img = image.DiscordImage(io.BytesIO(og_img), '')
 
     img._reduce_image_resolution(0.5)
     assert isinstance(img.image, io.BytesIO)
@@ -241,121 +236,7 @@ def test_change_image_resolution(
     assert f.size == (500, 500)
 
 
-@pytest.mark.parametrize('no_images', [False, True])
-@pytest.mark.asyncio
-async def test_send_announcements(
-    anno: announcements.Announcements,
-    mocker: MockerFixture,
-    faker: Faker,
-    no_images: bool,
-) -> None:
-    post = PostFactory(faker)
-    if no_images:
-        post.images.clear()
-
-    format_announcement_text_mock = mocker.patch.object(
-        anno,
-        'format_announcement_text'
-    )
-
-    text_len = len(post.post_text)
-    t = [
-        f'{post.timestamp}{post.post_text[:text_len//2]}',
-        f'{post.post_text[text_len//2:]}{post.post_url}',
-    ]
-    format_announcement_text_mock.return_value = t
-
-    images = [faker.image((8, 8)) for _ in range(5)]
-    prepared_images = [images[:2], images[2:4], images[4:]]
-
-    download_images_mock = mocker.patch.object(anno, 'download_images')
-    download_images_mock.return_value = images
-
-    prepare_images_mock = mocker.patch.object(anno, 'prepare_images')
-    prepare_images_mock.return_value = iter(prepared_images)
-
-    send_announcements_mock = mocker.patch.object(anno, '_send_announcements')
-
-    await anno.send_announcements(vars(post))
-
-    format_announcement_text_mock.assert_called_once_with(
-        post.post_text, post.timestamp, post.post_url
-    )
-    if no_images:
-        download_images_mock.assert_not_called()
-        prepare_images_mock.assert_not_called()
-        send_announcements_arguments = [
-            mocker.call(t[0]),
-            mocker.call(t[1]),
-        ]
-    else:
-        download_images_mock.assert_called_once_with(post.images)
-        prepare_images_mock.assert_called_once_with(images)
-        send_announcements_arguments = [
-            mocker.call(t[0]),
-            mocker.call(t[1], prepared_images[0]),
-            mocker.call(None, prepared_images[1]),
-            mocker.call(None, prepared_images[2]),
-        ]
-
-    send_announcements_mock.assert_called()
-    assert send_announcements_mock.call_args_list == \
-        send_announcements_arguments
-
-
-@pytest.mark.parametrize('new_posts', [False, True])
-@pytest.mark.asyncio
-async def test_check_for_announcements(
-    anno: announcements.Announcements,
-    faker: Faker,
-    mocker: MockerFixture,
-    new_posts: bool,
-) -> None:
-    posts = PostFactory.bulk(faker, 20)
-    sorted_posts = sorted(posts, key=lambda x: x.timestamp)
-    filtered_out_posts = sorted_posts[17:]
-
-    download_facebook_posts_mock = mocker.patch.object(
-        anno,
-        'download_facebook_posts'
-    )
-    download_facebook_posts_mock.return_value = posts
-
-    get_only_new_posts_mock = mocker.patch.object(anno, 'get_only_new_posts')
-    filter_out_only_event_posts_mock = mocker.patch.object(
-        anno, 'filter_out_only_event_posts'
-    )
-
-    if new_posts:
-        filtered_posts = filtered_out_posts
-    else:
-        filtered_posts = []
-
-    get_only_new_posts_mock.return_value = filtered_posts
-    filter_out_only_event_posts_mock.return_value = filtered_posts
-
-    send_announcements_mock = mocker.patch.object(anno, 'send_announcements')
-    save_posts_mock = mocker.patch.object(anno, 'save_posts')
-
-    await anno._check_for_announcements()
-
-    download_facebook_posts_mock.assert_called_once()
-    get_only_new_posts_mock.assert_called_once_with(posts)
-    filter_out_only_event_posts_mock.assert_called_once_with(filtered_posts)
-
-    if new_posts:
-        assert send_announcements_mock.call_args_list == [
-            mocker.call(filtered_out_posts[0]),
-            mocker.call(filtered_out_posts[1]),
-            mocker.call(filtered_out_posts[2]),
-        ]
-        save_posts_mock.assert_called_once_with(filtered_out_posts)
-    else:
-        send_announcements_mock.assert_not_called()
-        save_posts_mock.assert_not_called()
-
-
-@pytest.mark.parametrize('with_content,has_event', [
+@pytest.mark.parametrize('with_content,is_event', [
     [
         [
             {'name': 'event',
@@ -384,20 +265,20 @@ def test_post_contains_event(
     anno: announcements.Announcements,
     faker: Faker,
     with_content: list[dict[str, str]],
-    has_event: bool,
+    is_event: bool,
 ) -> None:
-    post = vars(PostFactory(faker))
+    post = PostFactory(faker)
 
     post['with'] = with_content
 
-    assert anno._post_contains_event(post) is has_event
+    assert FacebookPost.from_raw(post).is_event is is_event
 
 
 def test_filter_out_only_event_posts(
     anno: announcements.Announcements,
     faker: Faker,
 ) -> None:
-    ps = p0, p1, p2, p3 = list(map(vars, PostFactory.bulk(faker, 4)))
+    ps = p0, p1, p2, p3 = list(PostFactory.bulk(faker, 4))
     p0['post_text'] = ''
 
     p1['post_text'] = ''
@@ -407,4 +288,8 @@ def test_filter_out_only_event_posts(
 
     p3['with'].append({'name': 'not an event'})
 
-    assert anno.filter_out_only_event_posts(ps) == [p0, p2, p3]
+    pr = [FacebookPost.from_raw(i) for i in ps]
+
+    # assert anno.filter_out_only_event_posts(pr) == [p0, p2, p3]
+    assert all(i.timestamp == j['timestamp'] for i, j in zip(
+        anno.filter_out_only_event_posts(pr), [p0, p2, p3]))

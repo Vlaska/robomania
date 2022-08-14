@@ -50,7 +50,7 @@ class Robomania(commands.Bot):
             self._test_guilds = [958823316850880512]
 
     @classmethod
-    def load_config(cls, path: str | Path = ".env") -> None:
+    def load_config(cls, path: str | Path = '.env') -> None:
         cls.config = Config()
         cls.config.load_env(path)
 
@@ -93,7 +93,7 @@ def init_logger(logger: logging.Logger, out_file: str) -> None:
 
 @bot.event
 async def on_ready():
-    logger.info('We have logged in as "{0.user}"'.format(bot))
+    logger.info(f'We have logged in as "{bot.user}"')
 
 
 def main(config_path: str | Path = '.env') -> None:

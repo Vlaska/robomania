@@ -6,11 +6,23 @@ from io import StringIO
 from typing import Any
 
 import pytest
+from faker import Faker
 from mongomock_motor import AsyncMongoMockClient
 
 from robomania.config import Config
 
 configuration = StringIO('''DEBUG=1''')
+
+
+class FBPost:
+    post_id = 413
+    images = None
+    is_event = False
+
+    def __init__(self, faker: Faker) -> None:
+        self.timestamp = faker.unix_time()
+        self.post_text = faker.text(5000)
+        self.post_url = faker.uri()
 
 
 class _Bot:
@@ -31,12 +43,12 @@ def bot(client) -> _Bot:
     return _Bot(client)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def httpserver_listen_address():
-    return ("127.0.0.1", 1025)
+    return ('127.0.0.1', 1025)
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope='session', autouse=True)
 def faker_seed():
     return 413612
 
@@ -46,3 +58,8 @@ def client(monkeypatch: pytest.MonkeyPatch) -> AsyncMongoMockClient:
     c = AsyncMongoMockClient()
 
     return c
+
+
+@pytest.fixture
+def fb_post(faker: Faker) -> Any:
+    return FBPost(faker)
