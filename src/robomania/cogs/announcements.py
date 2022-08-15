@@ -280,7 +280,11 @@ class Announcements(commands.Cog):
 
     @staticmethod
     def _post_contains_event(post: Post) -> bool:
-        return any(i['name'] == 'event' for i in post['with'])
+        return (
+            'with' in post
+            and post['with']
+            and any(i['name'] == 'event' for i in post['with'])
+        )
 
     def filter_out_only_event_posts(self, posts: Posts) -> Posts:
         def condition(x: Post) -> bool:
