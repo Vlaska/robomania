@@ -2,14 +2,12 @@ from __future__ import annotations
 
 import io
 from datetime import datetime
-from random import randint
-from typing import Any, cast
+from typing import TYPE_CHECKING, cast
 
 import PIL
 import pytest
 from disnake.ext.commands import Bot as DisBot  # type: ignore[attr-defined]
 from faker import Faker
-from mongomock_motor import AsyncMongoMockClient
 from pytest import MonkeyPatch
 from pytest_httpserver import HTTPServer
 from pytest_mock import MockerFixture
@@ -18,26 +16,8 @@ from robomania.cogs import announcements
 from robomania.types import announcement_post, image
 from robomania.types.facebook_post import FacebookPost
 
-
-class PostFactory(dict):
-    def __init__(self, fake: Faker) -> None:
-        self.timestamp = fake.unix_time()
-        self.post_text = fake.paragraphs(nb=10)
-        self.post_id = fake.credit_card_number()
-        self.post_url = fake.uri()
-        self.likes = 15
-        img_count = randint(1, 5)
-        self.images_descriptions = fake.paragraphs(nb=img_count)
-        self.images = [fake.image_url() for _ in range(img_count)]
-        self['with'] = []
-
-    @classmethod
-    def bulk(cls, fake: Faker, num: int) -> list[PostFactory]:
-        return [cls(fake) for _ in range(num)]
-
-    def __setattr__(self, __name: str, __value: Any) -> None:
-        self[__name] = __value
-        self.__dict__[__name] = __value
+if TYPE_CHECKING:
+    from .conftest import TPostFactory, TRawPostFactory
 
 
 @pytest.fixture
@@ -74,7 +54,6 @@ def test_enough_time_from_last_check(
 
 @pytest.mark.asyncio
 async def test_download_images(
-    anno: announcements.Announcements,
     httpserver: HTTPServer,
 ) -> None:
     httpserver.expect_request('/test/image/example.png').respond_with_data(
@@ -147,14 +126,14 @@ def test_prepare_images(
     assert image_split == result
 
 
-def test_format_announcements_date(fb_post) -> None:
+def test_format_announcements_date(fb_post: TPostFactory) -> None:
     t = announcement_post.AnnouncementPost(fb_post)
 
     assert f'<t:{fb_post.timestamp}:F>' in t.announcements_date
 
 
 def test_format_announcement_text(
-    fb_post
+    fb_post: TPostFactory
 ) -> None:
     anno = announcement_post.AnnouncementPost(fb_post, None)
 
@@ -164,32 +143,12 @@ def test_format_announcement_text(
 
 
 @pytest.mark.asyncio
-async def test_get_latest_post_timestamp(
-    faker: Faker,
-    client: AsyncMongoMockClient
-) -> None:
-    collection = client.robomania.posts
-
-    posts = PostFactory.bulk(faker, 50)
-
-    latest_timestamp = int(datetime.now().timestamp()) + 60
-
-    known_post = PostFactory(faker)
-    known_post.timestamp = latest_timestamp
-
-    posts.append(known_post)
-    await collection.insert_many(vars(i) for i in posts)
-
-    assert await \
-        FacebookPost.latest_timestamp(client.robomania) == latest_timestamp
-
-
-@pytest.mark.asyncio
 async def test_get_only_new_posts(
     mocker: MockerFixture,
     faker: Faker,
+    raw_post_factory: TRawPostFactory
 ) -> None:
-    posts = PostFactory.bulk(faker, 12)
+    posts: list[FacebookPost] = raw_post_factory.bulk_create(12, faker)
 
     sorted_posts = sorted(posts, key=lambda x: x.timestamp)
     newest_old_post = sorted_posts[5]
@@ -262,12 +221,12 @@ def test_change_image_resolution(
     ]
 ])
 def test_post_contains_event(
-    anno: announcements.Announcements,
+    raw_post_factory: TRawPostFactory,
     faker: Faker,
     with_content: list[dict[str, str]],
     is_event: bool,
 ) -> None:
-    post = PostFactory(faker)
+    post = raw_post_factory(faker)
 
     post['with'] = with_content
 
@@ -277,8 +236,9 @@ def test_post_contains_event(
 def test_filter_out_only_event_posts(
     anno: announcements.Announcements,
     faker: Faker,
+    raw_post_factory: TRawPostFactory,
 ) -> None:
-    ps = p0, p1, p2, p3 = list(PostFactory.bulk(faker, 4))
+    ps = p0, p1, p2, p3 = raw_post_factory.bulk_create(4, faker)
     p0['post_text'] = ''
 
     p1['post_text'] = ''

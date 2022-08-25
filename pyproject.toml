@@ -38,7 +38,7 @@ testpaths = [
     "tests",
 ]
 asyncio_mode = "strict"
-addopts = "--cov=src/robomania --cov-report html"
+addopts = "--cov=src/robomania --cov-report html --cov-report xml:cov.xml"
 
 
 [tool.mypy]

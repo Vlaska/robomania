@@ -3,12 +3,15 @@ from __future__ import annotations
 import inspect
 import logging
 from dataclasses import InitVar, asdict, dataclass, field
-from typing import TYPE_CHECKING, Any, Awaitable, Iterable, TypeAlias, cast
+from typing import (TYPE_CHECKING, Any, Awaitable, Iterable, Type, TypeAlias,
+                    TypeVar, cast)
 
 if TYPE_CHECKING:
     from pymongo.database import Database
 
 
+# TODO: Replace by `typing.Self` when mypy will roll support for it
+TFacebookPost = TypeVar('TFacebookPost', bound='FacebookPost')
 logger = logging.getLogger('robomania.announcements')
 
 
@@ -26,7 +29,7 @@ class FacebookPost:
 
     @staticmethod
     def _post_contains_event(post: dict[str, Any]) -> bool:
-        return any(i['name'] == 'event' for i in post['with'])
+        return any(i['name'] == 'event' for i in post['with'] if 'name' in i)
 
     def __post_init__(self, post: dict[str, Any]) -> None:
         if 'is_event' in post:
@@ -39,11 +42,19 @@ class FacebookPost:
             )
 
     @classmethod
-    def from_dict(cls, post: dict[str, Any]) -> FacebookPost:
-        return cls(**post, post={})
+    def from_dict(
+        cls: Type[TFacebookPost],
+        post: dict[str, Any]
+    ) -> TFacebookPost:
+        t = post.copy()
+        t.pop('is_event', None)
+        return cls(**t, post=post)
 
     @classmethod
-    def from_raw(cls, post: dict[str, Any]) -> FacebookPost:
+    def from_raw(
+        cls: Type[TFacebookPost],
+        post: dict[str, Any]
+    ) -> TFacebookPost:
         post_fields = inspect.signature(cls).parameters
 
         return cls(**{
