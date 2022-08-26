@@ -6,11 +6,12 @@ from typing import TYPE_CHECKING
 import pytest
 from faker import Faker
 from mongomock_motor import AsyncMongoMockClient, AsyncMongoMockDatabase
+from pytest_mock import MockerFixture
 
 from robomania.types.facebook_post import FacebookPost
 
 if TYPE_CHECKING:
-    from .conftest import TPostFactory
+    from .conftest import TPostFactory, TRawPostFactory
 
 
 @pytest.fixture
@@ -62,19 +63,13 @@ def test_from_dict(dummy_post: dict) -> None:
     dummy_post['is_event'] = True
 
     result = FacebookPost.from_dict(dummy_post)
+
     assert result.is_event
-
-
-def test_from_raw(dummy_post: dict, dummy_fb_post: FacebookPost) -> None:
-    dummy_post = dummy_post.copy()
-    dummy_post.update({
-        'image_text': 'lorem',
-        'alt': 'lorem',
-        'trash': 'lorem',
-        'with': []
-    })
-
-    assert FacebookPost.from_raw(dummy_post) == dummy_fb_post
+    assert result.post_id == dummy_post['post_id']
+    assert result.post_text == dummy_post['post_text']
+    assert result.post_url == dummy_post['post_url']
+    assert result.timestamp == dummy_post['timestamp']
+    assert not result.images
 
 
 def test_to_dict(dummy_fb_post: FacebookPost, dummy_post: dict) -> None:
@@ -100,7 +95,7 @@ async def test_save(
 
 
 @pytest.mark.asyncio
-async def test_get_latest_post_timestamp(
+async def test_latest_timestamp(
     faker: Faker,
     post_factory: TPostFactory,
     client: AsyncMongoMockClient
@@ -119,3 +114,47 @@ async def test_get_latest_post_timestamp(
 
     assert await \
         FacebookPost.latest_timestamp(client.robomania) == latest_timestamp
+
+
+@pytest.mark.asyncio
+async def test_latest_timestamp_no_posts(
+    client: AsyncMongoMockClient,
+) -> None:
+    assert await FacebookPost.latest_timestamp(client.robomania) == 0
+
+
+def test_from_raw(dummy_post: dict) -> None:
+    dummy_post.update({
+        'with': [{'name': 'not event'}],
+        'post_images': [],
+        'images_low_res': [],
+    })
+
+    FacebookPost.from_raw(dummy_post)
+
+
+@pytest.mark.asyncio
+async def test_get_only_new_posts(
+    mocker: MockerFixture,
+    faker: Faker,
+    raw_post_factory: TRawPostFactory
+) -> None:
+    posts: list[FacebookPost] = raw_post_factory.bulk_create(12, faker)
+
+    sorted_posts = sorted(posts, key=lambda x: x.timestamp)
+    newest_old_post = sorted_posts[5]
+
+    async def _wrapper(_):
+        return newest_old_post.timestamp
+
+    mocker.patch.object(FacebookPost, 'latest_timestamp', _wrapper)
+
+    newest_posts = await FacebookPost.get_only_new_posts(
+        None,
+        list(map(FacebookPost.from_raw, posts))
+    )
+
+    assert all(
+        i['timestamp'] == j.timestamp
+        for i, j in zip(map(vars, sorted_posts[6:]), newest_posts)
+    )

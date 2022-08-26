@@ -142,33 +142,6 @@ def test_format_announcement_text(
     assert all(len(i) <= 2000 for i in formatted_text)
 
 
-@pytest.mark.asyncio
-async def test_get_only_new_posts(
-    mocker: MockerFixture,
-    faker: Faker,
-    raw_post_factory: TRawPostFactory
-) -> None:
-    posts: list[FacebookPost] = raw_post_factory.bulk_create(12, faker)
-
-    sorted_posts = sorted(posts, key=lambda x: x.timestamp)
-    newest_old_post = sorted_posts[5]
-
-    async def _wrapper(_):
-        return newest_old_post.timestamp
-
-    mocker.patch.object(FacebookPost, 'latest_timestamp', _wrapper)
-
-    newest_posts = await FacebookPost.get_only_new_posts(
-        None,
-        list(map(FacebookPost.from_raw, posts))
-    )
-
-    assert all(
-        i['timestamp'] == j.timestamp
-        for i, j in zip(map(vars, sorted_posts[6:]), newest_posts)
-    )
-
-
 def test_change_image_format(
     faker: Faker,
 ) -> None:
