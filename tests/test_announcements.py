@@ -68,7 +68,7 @@ async def test_download_images(
         httpserver.url_for('/test/emote/kek.jpg'),
     ])
 
-    images = await image.DiscordImage.download_images([
+    images = await image.Image.download_images([
         httpserver.url_for('/test/image/example.png'),
         httpserver.url_for('/test/emote/kek.jpg'),
     ])
@@ -99,7 +99,7 @@ def test_prepare_images(
     monkeypatch.setattr(image, 'MAX_TOTAL_SIZE_OF_IMAGES', 8 * 1024)
     bytesio_mock = mocker.Mock(spec=io.BytesIO)
 
-    class MockDiscordPostImage(image.DiscordImage):
+    class MockDiscordPostImage(image.Image):
         image = bytesio_mock
         name = 'lorem ipsum'
 
@@ -147,7 +147,7 @@ def test_change_image_format(
 ) -> None:
     img_raw = faker.image((1000, 1000), 'png')
     png_img = io.BytesIO(img_raw)
-    img = image.DiscordImage(png_img, '')
+    img = image.Image(png_img, '')
 
     img._change_image_format()
 
@@ -160,7 +160,7 @@ def test_change_image_resolution(
     faker: Faker,
 ) -> None:
     og_img = faker.image((1000, 1000), 'jpeg')
-    img = image.DiscordImage(io.BytesIO(og_img), '')
+    img = image.Image(io.BytesIO(og_img), '')
 
     img._reduce_image_resolution(0.5)
     assert isinstance(img.image, io.BytesIO)

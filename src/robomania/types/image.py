@@ -9,14 +9,14 @@ from urllib.parse import urlparse
 
 import aiohttp
 import disnake
-from PIL import Image
+from PIL import Image as PILImage
 
 logger = logging.getLogger('robomania')
 MAX_IMAGES_PER_MESSAGE = 10
 MAX_TOTAL_SIZE_OF_IMAGES = 8 * 1024 * 1024
 
 
-class DiscordImage:
+class Image:
     _data: io.BytesIO
     image: io.BytesIO
     DOWNSAMPLE_IMAGE_RESOLUTION_BY = [3 / 4, 1 / 2, 1 / 4, 1 / 8, 1 / 16]
@@ -30,14 +30,14 @@ class DiscordImage:
         self.image = io.BytesIO()
 
         with self.rewindable_buffer(self._data, self.image) as (data, image):
-            img = Image.open(data)
+            img = PILImage.open(data)
             img.convert('RGB').save(image, 'jpeg')
 
     def _reduce_image_resolution(self, factor: float) -> None:
         self.image = io.BytesIO()
 
         with self.rewindable_buffer(self._data, self.image) as (data, image):
-            img = Image.open(data)
+            img = PILImage.open(data)
             old_x, old_y = img.size
             new_size = (int(old_x * factor), int(old_y * factor))
             resized_img = img.resize(new_size)
@@ -80,7 +80,7 @@ class DiscordImage:
 
     @staticmethod
     def prepare_images(
-        images: list[DiscordImage]
+        images: list[Image]
     ) -> Generator[list[disnake.File], None, None]:
         current_image_group: list[disnake.File] = []
         current_total_size = 0
@@ -118,7 +118,7 @@ class DiscordImage:
     @staticmethod
     async def download_images(
         images: list[str]
-    ) -> list[DiscordImage]:
+    ) -> list[Image]:
         out = []
         async with aiohttp.ClientSession() as session:
             for url in images:
@@ -128,7 +128,7 @@ class DiscordImage:
 
                     data = io.BytesIO(await resp.read())
                     image_path = Path(urlparse(url).path)
-                    out.append(DiscordImage(data, image_path.name))
+                    out.append(Image(data, image_path.name))
 
         logger.debug(f'Downloaded {len(out)} images')
         return out

@@ -7,7 +7,7 @@ from typing import Any, Generator, Generic, Iterable, TypeVar, cast
 
 import disnake
 
-from robomania.types.image import DiscordImage
+from robomania.types.image import Image
 from robomania.utils.pipe import Pipe
 
 MAX_CHARACTERS_PER_POST = 2000
@@ -16,10 +16,10 @@ space_regex = re.compile(' +')
 space_before_punctuation = re.compile(' (?=[.,?!–—-])')
 three_dots = re.compile('\\.{3}')
 
-ImageType = TypeVar('ImageType', DiscordImage, str, )
+ImageType = TypeVar('ImageType', Image, str, )
 
 
-class DiscordPost(Generic[ImageType]):
+class Post(Generic[ImageType]):
     _images: list[ImageType] | None = None
     _text: str
     wrapped_text: list[str]
@@ -81,11 +81,11 @@ class DiscordPost(Generic[ImageType]):
         )
 
     @staticmethod
-    async def _get_images(images: list[ImageType]) -> list[DiscordImage]:
-        if isinstance(images[0], DiscordImage):
-            return cast(list[DiscordImage], images)
+    async def _get_images(images: list[ImageType]) -> list[Image]:
+        if isinstance(images[0], Image):
+            return cast(list[Image], images)
 
-        return list(await DiscordImage.download_images(
+        return list(await Image.download_images(
             cast(list[str], images)
         ))
 
@@ -95,7 +95,7 @@ class DiscordPost(Generic[ImageType]):
     ]:
         if self._images:
             images = await self._get_images(self._images)
-            images_to_send = DiscordImage.prepare_images(
+            images_to_send = Image.prepare_images(
                 images
             )
             first_images = next(images_to_send)
