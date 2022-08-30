@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import contextlib
-import io
-from typing import Generator, Protocol, Type, TypeVar
+import inspect
+import logging
+from typing import BinaryIO, Generator, Protocol, TextIO, Type, TypeVar
+
+logger = logging.getLogger('robomania')
 
 
 class Preconfigurable(Protocol):
@@ -12,12 +15,13 @@ class Preconfigurable(Protocol):
 
 
 _preconfigurable = TypeVar('_preconfigurable', bound=Preconfigurable)
+Buffer = TypeVar('Buffer', bound=TextIO | BinaryIO)
 
 
 @contextlib.contextmanager
 def rewindable_buffer(
-    *args: io.BytesIO
-) -> Generator[tuple[io.BytesIO, ...], None, None]:
+    *args: Buffer
+) -> Generator[tuple[Buffer, ...], None, None]:
     try:
         yield args
     finally:
@@ -26,7 +30,10 @@ def rewindable_buffer(
 
 
 def preconfigure(cls: Type[_preconfigurable]) -> Type[_preconfigurable]:
-    if getattr(cls, 'preconfigure'):
+    try:
         cls.preconfigure()
+    except AttributeError:
+        file = inspect.getfile(cls)
+        logger.error(f'Preconfiguration method missing: {file}:{cls.__name__}')
 
     return cls
