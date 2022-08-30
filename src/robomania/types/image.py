@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import contextlib
 import io
 import logging
 from pathlib import Path
@@ -10,6 +9,8 @@ from urllib.parse import urlparse
 import aiohttp
 import disnake
 from PIL import Image as PILImage
+
+from robomania.utils import rewindable_buffer
 
 logger = logging.getLogger('robomania')
 MAX_IMAGES_PER_MESSAGE = 10
@@ -29,14 +30,14 @@ class Image:
     def _change_image_format(self) -> None:
         self.image = io.BytesIO()
 
-        with self.rewindable_buffer(self._data, self.image) as (data, image):
+        with rewindable_buffer(self._data, self.image) as (data, image):
             img = PILImage.open(data)
             img.convert('RGB').save(image, 'jpeg')
 
     def _reduce_image_resolution(self, factor: float) -> None:
         self.image = io.BytesIO()
 
-        with self.rewindable_buffer(self._data, self.image) as (data, image):
+        with rewindable_buffer(self._data, self.image) as (data, image):
             img = PILImage.open(data)
             old_x, old_y = img.size
             new_size = (int(old_x * factor), int(old_y * factor))
@@ -58,17 +59,6 @@ class Image:
             raise ValueError(
                 'Could not reduce image size below given size constraint.'
             )
-
-    @contextlib.contextmanager
-    def rewindable_buffer(
-        self,
-        *args: io.BytesIO
-    ) -> Generator[tuple[io.BytesIO, ...], None, None]:
-        try:
-            yield args
-        finally:
-            for buffer in args:
-                buffer.seek(0)
 
     @property
     def size(self) -> int:

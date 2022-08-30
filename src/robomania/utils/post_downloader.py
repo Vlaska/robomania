@@ -7,11 +7,13 @@ from typing import Any, Iterator, cast
 from facebook_scraper import get_posts
 
 from robomania.config import Config
+from robomania.utils import preconfigure
 
 FBPost = dict[str, Any]
 FBPosts = list[FBPost]
 
 
+@preconfigure
 class PostDownloader:
     DONE = object()
 
@@ -64,3 +66,22 @@ class PostDownloader:
             )
         )
         return cls(loop, lazy_posts)
+
+    @classmethod
+    async def download_posts(
+        cls,
+        fanpage: str,
+        pages: int,
+        loop: asyncio.AbstractEventLoop = None
+    ) -> FBPosts:
+        if not loop:
+            loop = asyncio.get_event_loop()
+
+        iterator = await cls.new(loop, fanpage, pages)
+
+        return await iterator.get_all()
+
+    @staticmethod
+    def preconfigure() -> None:
+        from facebook_scraper import _scraper
+        _scraper.session.headers.update({'Accept-Language': 'en-US,en;q=0.5'})

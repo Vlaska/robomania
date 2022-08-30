@@ -23,13 +23,19 @@ class FacebookPost:
     post_url: str
     images: list[str] | None
 
+    EVENT_NAME_MULTILANG = {'event', 'wydarzenie'}
+
     is_event: bool = field(init=False, default=False)
 
     post: InitVar[dict[str, Any]]
 
     @staticmethod
     def _post_contains_event(post: dict[str, Any]) -> bool:
-        return any(i['name'] == 'event' for i in post['with'] if 'name' in i)
+        return any(
+            i['name'] in FacebookPost.EVENT_NAME_MULTILANG
+            for i in post['with']
+            if 'name' in i
+        )
 
     def __post_init__(self, post: dict[str, Any]) -> None:
         if 'is_event' in post:
@@ -64,6 +70,16 @@ class FacebookPost:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+    @staticmethod
+    def remove_event_posts(
+        posts: FacebookPosts
+    ) -> FacebookPosts:
+
+        def condition(x: FacebookPost) -> bool:
+            return not (not x.post_text and x.is_event)
+
+        return list(filter(condition, posts))
 
     @staticmethod
     async def save(db: Database, posts: Iterable[FacebookPost]) -> None:

@@ -79,7 +79,7 @@ class Announcements(commands.Cog):
                     self.bot.get_db('robomania'),
                     posts
                 )
-                posts = self.filter_out_only_event_posts(posts)
+                posts = FacebookPost.remove_event_posts(posts)
 
                 if not posts:
                     logger.info('No new posts found')
@@ -103,12 +103,11 @@ class Announcements(commands.Cog):
         loop = self.bot.loop
         logger.debug('Downloading facebook posts')
 
-        post_iter = await PostDownloader.new(
-            loop,
+        raw_posts = await PostDownloader.download_posts(
             self.fanpage_name,
-            self.DOWNLOAD_PAGE_LIMIT
+            self.DOWNLOAD_PAGE_LIMIT,
+            loop
         )
-        raw_posts = await post_iter.get_all()
 
         return list(map(FacebookPost.from_raw, raw_posts))
 
@@ -118,16 +117,6 @@ class Announcements(commands.Cog):
             current_time - self.bot.announcements_last_checked
 
         return time_since_last_check > self.MIN_DELAY_BETWEEN_CHECKS
-
-    def filter_out_only_event_posts(
-        self,
-        posts: FacebookPosts
-    ) -> FacebookPosts:
-
-        def condition(x: FacebookPost) -> bool:
-            return not (not x.post_text and x.is_event)
-
-        return list(filter(condition, posts))
 
     def cog_unload(self) -> None:
         self.check_for_announcements.stop()

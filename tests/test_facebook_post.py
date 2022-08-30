@@ -158,3 +158,27 @@ async def test_get_only_new_posts(
         i['timestamp'] == j.timestamp
         for i, j in zip(map(vars, sorted_posts[6:]), newest_posts)
     )
+
+
+def test_event_posts(
+    faker: Faker,
+    raw_post_factory: TRawPostFactory,
+) -> None:
+    ps = p0, p1, p2, p3 = raw_post_factory.bulk_create(4, faker)
+    p0['post_text'] = ''
+
+    p1['post_text'] = ''
+    p1['with'].append({'name': 'event'})
+
+    p2['with'].append({'name': 'event'})
+
+    p3['with'].append({'name': 'not an event'})
+
+    pr = [FacebookPost.from_raw(i) for i in ps]
+
+    assert all(
+        i.timestamp == j['timestamp']
+        for i, j in zip(
+            FacebookPost.remove_event_posts(pr), [p0, p2, p3]
+        )
+    )
