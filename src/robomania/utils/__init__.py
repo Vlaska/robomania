@@ -5,7 +5,7 @@ import inspect
 import logging
 from typing import BinaryIO, Generator, Protocol, TextIO, Type, TypeVar
 
-logger = logging.getLogger('robomania')
+logger = logging.getLogger('robomania.utils')
 
 
 class Preconfigurable(Protocol):

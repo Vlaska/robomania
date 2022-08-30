@@ -65,5 +65,6 @@ exclude_lines = [
     "def __repr__",
     "pragma: no cover",
     "@click",
-    "if Config.debug:"
+    "if Config.debug:",
+    "raise NotImplementedError"
 ]

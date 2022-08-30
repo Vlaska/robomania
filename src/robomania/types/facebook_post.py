@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 # TODO: Replace by `typing.Self` when mypy will roll support for it
 TFacebookPost = TypeVar('TFacebookPost', bound='FacebookPost')
-logger = logging.getLogger('robomania.announcements')
+logger = logging.getLogger('robomania.types')
 
 
 @dataclass()

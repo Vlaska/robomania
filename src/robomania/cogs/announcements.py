@@ -16,7 +16,7 @@ from robomania.types.announcement_post import AnnouncementPost
 from robomania.types.facebook_post import FacebookPost, FacebookPosts
 from robomania.utils.post_downloader import PostDownloader
 
-logger = logging.getLogger('robomania.announcements')
+logger = logging.getLogger('robomania.cogs.announcements')
 
 
 class Announcements(commands.Cog):
@@ -75,7 +75,7 @@ class Announcements(commands.Cog):
                 self.bot.announcements_last_checked = datetime.datetime.now()
 
                 posts = await self.download_facebook_posts()
-                posts = await AnnouncementPost.get_only_new_posts(
+                posts = await FacebookPost.get_only_new_posts(
                     self.bot.get_db('robomania'),
                     posts
                 )
@@ -85,10 +85,10 @@ class Announcements(commands.Cog):
                     logger.info('No new posts found')
                     return
 
-                self.send_annoucements(posts)
+                await self.send_annoucements(posts)
 
-            except Exception:
-                logger.warning('')
+            except Exception as e:
+                logger.exception(str(e))
 
     async def send_annoucements(self, posts: FacebookPosts) -> None:
         logger.info(f'Sending {len(posts)} announcements')

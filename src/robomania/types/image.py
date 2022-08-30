@@ -12,7 +12,7 @@ from PIL import Image as PILImage
 
 from robomania.utils import rewindable_buffer
 
-logger = logging.getLogger('robomania')
+logger = logging.getLogger('robomania.types')
 MAX_IMAGES_PER_MESSAGE = 10
 MAX_TOTAL_SIZE_OF_IMAGES = 8 * 1024 * 1024
 
