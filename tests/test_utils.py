@@ -6,6 +6,7 @@ import logging
 from pytest_mock import MockerFixture
 
 from robomania import utils
+from robomania.utils import pipe
 
 
 def test_rewindable_buffer(mocker: MockerFixture) -> None:
@@ -51,3 +52,38 @@ def test_preconfigure_missing_method(caplog) -> None:
 
     # assert 'Preconfiguration method missing' in caplog.records[-1].msg
     assert 'Preconfiguration method missing' in caplog.text
+
+
+def test_pipe_adding_stages() -> None:
+    def f1(x): return x + 5  # noqa: E731
+    def f2(x): return x - 3  # noqa: E731
+    def f3(x): return x * 2  # noqa: E731
+    def f4(x): return x ** 2  # noqa: E731
+    def f5(x): return x / 4  # noqa: E731
+
+    p = pipe.Pipe(f1)
+    p | f2 | f3
+    p.add(f4)
+    p = f5 | p
+
+    assert p.pipeline == [f5, f1, f2, f3, f4]
+
+
+def test_pipe_run() -> None:
+    p = pipe.Pipe(lambda x: x + 5)
+    p | (lambda x: x - 3) | (lambda x: x * 2)
+    p.add(lambda x: x ** 2)
+    p = (lambda x: x / 4) | p
+
+    assert p(20) == 196
+
+
+def test_pipe_copy() -> None:
+    p1 = pipe.Pipe(lambda x: x + 5)
+    p2 = p1.copy()
+
+    assert p1.pipeline == p2.pipeline
+
+    p2.add(lambda x: x - 2)
+
+    assert p1.pipeline != p2.pipeline
