@@ -54,36 +54,41 @@ def test_preconfigure_missing_method(caplog) -> None:
     assert 'Preconfiguration method missing' in caplog.text
 
 
-def test_pipe_adding_stages() -> None:
-    def f1(x): return x + 5  # noqa: E731
-    def f2(x): return x - 3  # noqa: E731
-    def f3(x): return x * 2  # noqa: E731
-    def f4(x): return x ** 2  # noqa: E731
-    def f5(x): return x / 4  # noqa: E731
+class TestPipe:
+    @staticmethod
+    def f1(x): return x + 5
+    @staticmethod
+    def f2(x): return x - 3
+    @staticmethod
+    def f3(x): return x * 2
+    @staticmethod
+    def f4(x): return x ** 2
+    @staticmethod
+    def f5(x): return x / 4
 
-    p = pipe.Pipe(f1)
-    p | f2 | f3
-    p.add(f4)
-    p = f5 | p
+    def test_adding_stages(self) -> None:
 
-    assert p.pipeline == [f5, f1, f2, f3, f4]
+        p = pipe.Pipe(self.f1)
+        p | self.f2 | self.f3
+        p.add(self.f4)
+        p = self.f5 | p
 
+        assert p.pipeline == [self.f5, self.f1, self.f2, self.f3, self.f4]
 
-def test_pipe_run() -> None:
-    p = pipe.Pipe(lambda x: x + 5)
-    p | (lambda x: x - 3) | (lambda x: x * 2)
-    p.add(lambda x: x ** 2)
-    p = (lambda x: x / 4) | p
+    def test_run(self) -> None:
+        p = pipe.Pipe(self.f1)
+        p | self.f2 | self.f3
+        p.add(self.f4)
+        p = self.f5 | p
 
-    assert p(20) == 196
+        assert p(20) == 196
 
+    def test_copy(self) -> None:
+        p1 = pipe.Pipe(self.f1)
+        p2 = p1.copy()
 
-def test_pipe_copy() -> None:
-    p1 = pipe.Pipe(lambda x: x + 5)
-    p2 = p1.copy()
+        assert p1.pipeline == p2.pipeline
 
-    assert p1.pipeline == p2.pipeline
+        p2.add(self.f2)
 
-    p2.add(lambda x: x - 2)
-
-    assert p1.pipeline != p2.pipeline
+        assert p1.pipeline != p2.pipeline
