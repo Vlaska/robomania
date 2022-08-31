@@ -85,9 +85,9 @@ class Post(Generic[ImageType]):
         if isinstance(images[0], Image):
             return cast(list[Image], images)
 
-        return list(await Image.download_images(
+        return await Image.download_images(
             cast(list[str], images)
-        ))
+        )
 
     async def _prepare_images(self) -> tuple[
         list[disnake.File] | None,
