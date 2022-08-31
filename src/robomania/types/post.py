@@ -36,7 +36,7 @@ class Post(Generic[ImageType]):
         | partial(space_regex.sub, ' ')
         | partial(space_before_punctuation.sub, '')
         | partial(three_dots.sub, '…')
-        | disnake.utils.remove_markdown
+        | disnake.utils.escape_markdown
     )
 
     def __init__(

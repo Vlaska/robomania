@@ -115,6 +115,7 @@ class Image:
                 async with session.get(url) as resp:
                     if resp.status != 200:
                         logger.warning('Problem with image download.')
+                        continue
 
                     data = io.BytesIO(await resp.read())
                     image_path = Path(urlparse(url).path)
