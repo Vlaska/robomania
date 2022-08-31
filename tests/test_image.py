@@ -13,6 +13,14 @@ from pytest_mock import MockerFixture
 from robomania.types import image
 
 
+@pytest.fixture
+def img(faker: Faker) -> image.Image:
+    img_raw = faker.image((1000, 1000), 'png')
+    img = image.Image(io.BytesIO(img_raw), 'test.png')
+
+    return img
+
+
 @pytest.mark.asyncio
 async def test_download_images(
     httpserver: HTTPServer,
@@ -41,17 +49,20 @@ async def test_download_images(
 
 
 def test_change_image_format(
-    faker: Faker,
+    img: image.Image
 ) -> None:
-    img_raw = faker.image((1000, 1000), 'png')
-    png_img = io.BytesIO(img_raw)
-    img = image.Image(png_img, '')
-
     img._change_image_format()
 
     assert isinstance(img.image, io.BytesIO)
     assert img._data.read(8) == b'\x89PNG\r\n\x1a\n'
     assert img.image.read(4) == b'\xff\xd8\xff\xe0'
+
+
+@pytest.mark.xfail(reason='Not implemented')
+def test_change_image_format_changes_format_in_name(img: image.Image) -> None:
+    img._change_image_format()
+
+    assert img.name == 'test.jpg'
 
 
 @pytest.mark.parametrize(
@@ -111,3 +122,35 @@ def test_change_image_resolution(
     assert isinstance(img.image, io.BytesIO)
     f = PIL.Image.open(img.image)
     assert f.size == (500, 500)
+
+
+def test_reduce_size(faker: Faker, mocker: MockerFixture) -> None:
+    img_raw = faker.image((7500, 7500), 'tiff')
+    change_format = mocker.spy(image.Image, '_change_image_format')
+    reduce_resolution = mocker.spy(image.Image, '_reduce_image_resolution')
+
+    img = image.Image(io.BytesIO(img_raw), 'test.tiff')
+
+    img.reduce_size(153600)
+
+    assert img.size <= 153600
+    change_format.assert_called_once()
+    reduce_resolution.assert_called()
+
+
+def test_reduce_size_cannot_reduce_enough(
+    mocker: MockerFixture
+) -> None:
+    img_raw = mocker.Mock(io.BytesIO)
+    mocker.patch.object(
+        image.Image,
+        'size',
+        new_callable=mocker.PropertyMock(return_value=10000)
+    )
+    mocker.patch.object(image.Image, '_reduce_image_resolution')
+    mocker.patch.object(image.Image, '_change_image_format')
+
+    img = image.Image(img_raw, 'test.png')
+
+    with pytest.raises(ValueError):
+        img.reduce_size(100)

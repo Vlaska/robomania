@@ -54,11 +54,11 @@ class Image:
             self._reduce_image_resolution(factor)
 
             if self.size <= max_size:
-                break
-        else:
-            raise ValueError(
-                'Could not reduce image size below given size constraint.'
-            )
+                return
+
+        raise ValueError(
+            'Could not reduce image size below given size constraint.'
+        )
 
     @property
     def size(self) -> int:
