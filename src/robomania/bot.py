@@ -66,6 +66,8 @@ class Robomania(commands.Bot):
         await super().start(*args, **kwargs)
 
     def get_db(self, name: str) -> Database:
+        if Config.debug:
+            name = f'{name}-dev'
         return self.client[name]
 
 
