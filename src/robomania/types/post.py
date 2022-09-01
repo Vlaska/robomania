@@ -72,6 +72,7 @@ class Post(Generic[ImageType]):
         channel: disnake.TextChannel,
         text: str = None,
         images: list[disnake.File] = None,
+        /,
         kwargs: dict[str, Any] = {}
     ) -> None:
         await channel.send(
@@ -119,8 +120,13 @@ class Post(Generic[ImageType]):
         for i in text_to_send:
             await self._send(target, i, kwargs=kwargs)
 
-        await self._send(target, last_messages_text, first_images, kwargs)
+        await self._send(
+            target,
+            last_messages_text,
+            first_images,
+            kwargs=kwargs
+        )
 
         if images_to_send:
             for i in images_to_send:
-                await self._send(target, None, i, kwargs)
+                await self._send(target, None, i, kwargs=kwargs)
