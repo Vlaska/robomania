@@ -82,7 +82,13 @@ logger = logging.getLogger('robomania')
 def init_logger(logger: logging.Logger, out_file: str) -> None:
     logger.setLevel(logging.DEBUG if Config.debug else logging.INFO)
 
-    handler = logging.FileHandler(out_file, encoding='utf-8', mode='a')
+    log_folder = Config.log_folder
+
+    handler = logging.FileHandler(
+        log_folder / out_file,
+        encoding='utf-8',
+        mode='a'
+    )
     handler.setFormatter(
         logging.Formatter(
             '%(asctime)s:%(levelname)s:%(name)s: %(message)s'

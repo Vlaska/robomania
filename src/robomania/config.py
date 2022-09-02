@@ -21,6 +21,7 @@ class Config:
     ]
     scraper_user_agent: Annotated[str, 'FACEBOOK_SCRAPER_USER_AGENT']
     facebook_cookies_path: Annotated[str, 'FACEBOOK_COOKIES_PATH']
+    log_folder: Annotated[Path, 'LOG_FOLDER', Path('.')]
 
     debug: Annotated[bool, 'DEBUG', False]
 
