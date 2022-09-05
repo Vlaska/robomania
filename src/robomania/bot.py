@@ -7,7 +7,6 @@ from pathlib import Path
 
 import disnake
 from disnake.ext import commands
-from facebook_scraper import _scraper
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.database import Database
 
@@ -56,8 +55,6 @@ class Robomania(commands.Bot):
 
     async def start(self, *args, **kwargs) -> None:
         self.client = AsyncIOMotorClient(self._get_db_connection_url())
-
-        _scraper.set_user_agent(Config.scraper_user_agent)
 
         if self.config.debug:
             logger.warning('Running in debug mode')

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from functools import partial
 from typing import Any, Iterator, cast
 
@@ -11,6 +12,8 @@ from robomania.utils import preconfigure
 
 FBPost = dict[str, Any]
 FBPosts = list[FBPost]
+
+logger = logging.getLogger('robomania.types')
 
 
 @preconfigure
@@ -37,7 +40,10 @@ class PostDownloader:
         )
 
         if out is self.DONE:
+            logger.debug('Downloaded all posts')
             raise StopAsyncIteration
+
+        logger.debug(f'Downloaded post {out["post_id"]}')  # type: ignore
 
         return cast(FBPost, out)
 
@@ -46,6 +52,8 @@ class PostDownloader:
 
         async for i in self:
             out.append(i)
+
+        logger.info(f'Downloaded {len(out)} posts.')
 
         return out
 
@@ -56,6 +64,7 @@ class PostDownloader:
         fanpage: str,
         pages: int
     ) -> PostDownloader:
+        logger.debug(f'Download params: {fanpage=}, {pages=}')
         lazy_posts = await loop.run_in_executor(
             None,
             partial(
@@ -85,3 +94,6 @@ class PostDownloader:
     def preconfigure() -> None:
         from facebook_scraper import _scraper
         _scraper.session.headers.update({'Accept-Language': 'en-US,en;q=0.5'})
+
+        if Config.scraper_user_agent:
+            _scraper.set_user_agent(Config.scraper_user_agent)
