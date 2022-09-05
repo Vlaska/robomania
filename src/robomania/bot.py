@@ -7,7 +7,6 @@ from pathlib import Path
 
 import disnake
 from disnake.ext import commands
-from facebook_scraper import _scraper
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.database import Database
 
@@ -50,14 +49,12 @@ class Robomania(commands.Bot):
             self._test_guilds = [958823316850880512]
 
     @classmethod
-    def load_config(cls, path: str | Path = ".env") -> None:
+    def load_config(cls, path: str | Path = '.env') -> None:
         cls.config = Config()
         cls.config.load_env(path)
 
     async def start(self, *args, **kwargs) -> None:
         self.client = AsyncIOMotorClient(self._get_db_connection_url())
-
-        _scraper.set_user_agent(Config.scraper_user_agent)
 
         if self.config.debug:
             logger.warning('Running in debug mode')
@@ -66,6 +63,8 @@ class Robomania(commands.Bot):
         await super().start(*args, **kwargs)
 
     def get_db(self, name: str) -> Database:
+        if Config.debug:
+            name = f'{name}-dev'
         return self.client[name]
 
 
@@ -82,7 +81,13 @@ logger = logging.getLogger('robomania')
 def init_logger(logger: logging.Logger, out_file: str) -> None:
     logger.setLevel(logging.DEBUG if Config.debug else logging.INFO)
 
-    handler = logging.FileHandler(out_file, encoding='utf-8', mode='a')
+    log_folder = Config.log_folder
+
+    handler = logging.FileHandler(
+        log_folder / out_file,
+        encoding='utf-8',
+        mode='a'
+    )
     handler.setFormatter(
         logging.Formatter(
             '%(asctime)s:%(levelname)s:%(name)s: %(message)s'
@@ -93,7 +98,7 @@ def init_logger(logger: logging.Logger, out_file: str) -> None:
 
 @bot.event
 async def on_ready():
-    logger.info('We have logged in as "{0.user}"'.format(bot))
+    logger.info(f'We have logged in as "{bot.user}"')
 
 
 def main(config_path: str | Path = '.env') -> None:
