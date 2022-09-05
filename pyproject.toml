@@ -1,6 +1,6 @@
 [project]
 name = "robomania"
-version = "0.0.1"
+version = "0.0.2"
 description = "Bot for use on Domeq Krk discord server"
 requires-python = ">=3.10"
 dependencies = [
