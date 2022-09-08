@@ -1,5 +1,4 @@
 {
-    "rpc.enabled": false,
     "python.testing.pytestArgs": [
         "tests"
     ],
@@ -8,5 +7,11 @@
     "yaml.schemas": {
         "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json": "mongo.yaml",
         "https://json.schemastore.org/github-workflow.json": ".github/workflows/deploy.yaml"
-    }
+    },
+    "logViewer.watch": [
+        {
+            "title": "Logging: Robomania",
+            "pattern": "logs/robomania.log"
+        }
+    ]
 }

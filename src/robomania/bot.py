@@ -82,6 +82,7 @@ def init_logger(logger: logging.Logger, out_file: str) -> None:
     logger.setLevel(logging.DEBUG if Config.debug else logging.INFO)
 
     log_folder = Config.log_folder
+    log_folder.mkdir(parents=True, exist_ok=True)
 
     handler = logging.FileHandler(
         log_folder / out_file,
