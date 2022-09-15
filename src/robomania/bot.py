@@ -11,6 +11,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.database import Database
 
 from robomania.config import Config
+from robomania.utils.exceptions import NoInstanceError
 
 intents = disnake.Intents.default()
 intents.typing = False
@@ -21,6 +22,11 @@ class Robomania(commands.Bot):
     client: AsyncIOMotorClient
     announcements_last_checked: datetime = datetime(1, 1, 1)
     config: Config
+    __bot: Robomania
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.__class__.__bot = self
 
     @staticmethod
     def _get_db_connection_url() -> str:
@@ -43,6 +49,7 @@ class Robomania(commands.Bot):
         )
 
     def setup(self) -> None:
+        self.i18n.load('locale/')
         if self.config.debug:
             self.reload = True
             self._sync_commands_debug = True
@@ -66,6 +73,13 @@ class Robomania(commands.Bot):
         if Config.debug:
             name = f'{name}-dev'
         return self.client[name]
+
+    @classmethod
+    def get_bot(cls) -> Robomania:
+        try:
+            return cls.__bot
+        except AttributeError:
+            raise NoInstanceError('No bot instance was created.')
 
 
 bot = Robomania(
@@ -111,6 +125,7 @@ def main(config_path: str | Path = '.env') -> None:
     bot.setup()
 
     bot.load_extension('robomania.cogs.announcements')
+    bot.load_extension('robomania.cogs.picrew')
     if bot.config.debug:
         bot.load_extension('robomania.cogs.tester')
 
