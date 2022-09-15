@@ -1,0 +1,7 @@
+{
+    "ADD_PICREW_NAME": "dodaj",
+    "ADD_PICREW_DESCRIPTION": "Dodaj nowy link Picrew do wysłania później.",
+    "ADD_PICREW_URL_NAME": "link",
+    "ADD_PICREW_URL_DESCRIPTION": "Link Picrew, musi to być poprawny link",
+    "PICREW_STATUS_RESPONSE": "Obecnie {not_posted} linków czeka w kolejce."
+}

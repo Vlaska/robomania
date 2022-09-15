@@ -19,6 +19,10 @@ class Config:
         int,
         'ANNOUNCEMENTS_TARGET_CHANNEL'
     ]
+    picrew_target_channel: Annotated[
+        int,
+        'PICREW_TARGET_CHANNEL'
+    ]
     scraper_user_agent: Annotated[str, 'FACEBOOK_SCRAPER_USER_AGENT']
     facebook_cookies_path: Annotated[str, 'FACEBOOK_COOKIES_PATH']
     log_folder: Annotated[Path, 'LOG_FOLDER', Path('.')]
