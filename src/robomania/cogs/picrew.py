@@ -3,12 +3,43 @@ from __future__ import annotations
 from typing import cast
 
 import disnake
-from disnake import ApplicationCommandInteraction
+import validators
+from disnake import AllowedMentions, ApplicationCommandInteraction
 from disnake.ext import commands
 
 from robomania.bot import Robomania
 from robomania.config import Config
 from robomania.types.picrew_model import PicrewModel
+from robomania.types.post import Post
+from robomania.utils.exceptions import DuplicateError
+
+
+class PicrewPost:
+    picrew_info: PicrewModel
+    post: Post
+
+    def __init__(self, info: PicrewModel) -> None:
+        self.picrew_info = info
+
+        if self.picrew_info.user:
+            user_mention = self.picrew_info.user.mention
+        else:
+            user_mention = '*nieznany*'
+
+        self.post = Post(
+            f'{self.picrew_info.link}\n'
+            f'Post link dodany przez: {user_mention}'
+        )
+
+    async def send(self, channel: disnake.TextChannel) -> None:
+        await self.post.send(channel)
+
+    async def respond(self, inter: ApplicationCommandInteraction) -> None:
+        text = self.post.text
+        await inter.send(
+            text,
+            allowed_mentions=AllowedMentions(users=False)
+        )
 
 
 class Picrew(commands.Cog):
@@ -43,13 +74,36 @@ class Picrew(commands.Cog):
         url : :class:`str`
             Picrew link, must be valid url {{ ADD_PICREW_URL }}
         """
-        pass
+        if not validators.url(url) or 'picrew.me' not in url:
+            await inter.send(
+                'Nieprawidłowy link.'
+            )
+            return
+
+        await inter.response.defer()
+
+        picrew = PicrewModel(inter.user, url, inter.created_at, False)
+
+        try:
+            await picrew.save(self.bot.get_db('robomania'))
+        except DuplicateError:
+            await inter.send('Link został już dodany 😥.')
+        else:
+            await inter.send('Dodano 😊')
 
     @picrew.sub_command()
     async def status(
         self,
         inter: ApplicationCommandInteraction,
     ) -> None:
+        """
+        Show informations about picrew links. {{ PICREW_STATUS }}
+
+        Parameters
+        ----------
+        inter : :class:`ApplicationCommandInteraction`
+            Command interaction
+        """
         await inter.response.defer()
 
         db = self.bot.get_db('robomania')
@@ -60,10 +114,28 @@ class Picrew(commands.Cog):
             f'Do tej pory zostało wysłanych {count.posted} linków.'
         )
 
-    if Config.debug:
-        @picrew.sub_command()
-        async def post(self, inter: ApplicationCommandInteraction) -> None:
-            pass
+    @picrew.sub_command()
+    async def post(self, inter: ApplicationCommandInteraction) -> None:
+        """Send a picrew link. {{ PICREW_SEND }}
+
+        Parameters
+        ----------
+        inter : ApplicationCommandInteraction
+            Command interaction
+        """
+        db = self.bot.get_db('robomania')
+
+        await inter.response.defer()
+
+        posts = await PicrewModel.get_random_unposted(db, 1)
+        if not posts:
+            await inter.followup.send(
+                'Brak linków do wysłania.'
+            )
+            return
+
+        post = PicrewPost(posts[0])
+        await post.respond(inter)
 
 
 def setup(bot: Robomania) -> None:

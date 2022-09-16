@@ -3,14 +3,18 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Awaitable, cast
 
+import disnake
 from attrs import asdict, define, field
 from bson import ObjectId
 from disnake import User
+from pymongo.errors import WriteError
 
 from robomania.bot import Robomania
 from robomania.types.model import Model
+from robomania.utils.exceptions import DuplicateError
 
 if TYPE_CHECKING:
+    from motor.motor_asyncio import AsyncIOMotorDatabase
     from pymongo.database import Database
     from pymongo.results import InsertOneResult
 
@@ -43,7 +47,7 @@ class PicrewCountByPostStatus:
 
 @define
 class PicrewModel(Model):
-    user: User
+    user: User | None
     link: str
     add_date: datetime
     was_posted: bool
@@ -51,7 +55,10 @@ class PicrewModel(Model):
 
     def to_dict(self) -> dict[str, Any]:
         out = asdict(self)
-        out['user'] = self.user.id
+
+        if self.user:
+            out['user'] = self.user.id
+
         id = out.pop('id', None)
 
         if id:
@@ -61,16 +68,10 @@ class PicrewModel(Model):
 
     @classmethod
     def from_raw(cls, post: dict[str, Any]) -> PicrewModel:
-        bot = Robomania.get_bot()
-
         post = post.copy()
         _id = post.pop('_id', None)
 
-        user_id = post.pop('user')
-        user = bot.get_user(user_id)
-
         return cls(
-            user=user,
             id=_id,
             **post
         )
@@ -85,11 +86,50 @@ class PicrewModel(Model):
                 col.update_one({'_id': self.id}, {'$set': document})
             )
         else:
-            result: InsertOneResult = await cast(
-                Awaitable,
-                col.insert_one(document)
-            )
-            self.id = result.inserted_id
+            try:
+                result: InsertOneResult = await cast(
+                    Awaitable,
+                    col.insert_one(document)
+                )
+            except WriteError as e:
+                if e.code == 11000:
+                    raise DuplicateError('Duplicate picrew link')
+                raise e
+            else:
+                self.id = result.inserted_id
+
+    @classmethod
+    async def get(
+        cls,
+        db: AsyncIOMotorDatabase,
+        pipeline: list[dict[str, Any]]
+    ) -> list[PicrewModel]:
+        col = db.picrew
+        aggregator = col.aggregate(pipeline)
+        bot = Robomania.get_bot()
+
+        out = []
+
+        async for i in aggregator:
+            user_id = i['user']
+            if (
+                user_id is not None and
+                (user := bot.get_user(user_id)) is None
+            ):
+                try:
+                    user = await bot.fetch_user(i['user'])
+                except disnake.NotFound:
+                    user = None
+            else:
+                user = None
+
+            i['user'] = user
+
+            model = cls.from_raw(i)
+
+            out.append(model)
+
+        return out
 
     @classmethod
     async def get_random_unposted(
@@ -97,14 +137,12 @@ class PicrewModel(Model):
         db: Database,
         count: int
     ) -> list[PicrewModel]:
-        col = db.picrew
-
-        out = await cast(Awaitable, col.aggregate([  # type: ignore
+        pipeline: list[dict] = [
             {'$match': {'was_posted': False}},
             {'$sample': {'size': count}}
-        ])).to_list(count)
+        ]
 
-        return list(map(cls.from_raw, out))
+        return await cls.get(db, pipeline)
 
     @classmethod
     async def count_posted_and_not_posted(
@@ -121,3 +159,13 @@ class PicrewModel(Model):
         ).to_list(None)
 
         return PicrewCountByPostStatus.from_mongo_documents(results)
+
+    @staticmethod
+    async def create_collections(db: Database) -> None:
+        import pymongo
+
+        col = db.picrew
+        await cast(
+            Awaitable,
+            col.create_index([('link', pymongo.TEXT)], unique=True)
+        )
