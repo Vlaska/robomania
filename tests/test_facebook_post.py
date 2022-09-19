@@ -8,7 +8,7 @@ from faker import Faker
 from mongomock_motor import AsyncMongoMockClient, AsyncMongoMockDatabase
 from pytest_mock import MockerFixture
 
-from robomania.types.facebook_post import FacebookPost
+from robomania.models.facebook_post import FacebookPost
 
 if TYPE_CHECKING:
     from .conftest import TPostFactory, TRawPostFactory

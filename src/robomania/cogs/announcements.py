@@ -12,8 +12,8 @@ from disnake.ext import commands, tasks  # type: ignore[attr-defined]
 
 from robomania.bot import Robomania
 from robomania.config import Config
+from robomania.models.facebook_post import FacebookPost, FacebookPosts
 from robomania.types.announcement_post import AnnouncementPost
-from robomania.types.facebook_post import FacebookPost, FacebookPosts
 from robomania.utils.post_downloader import PostDownloader
 
 logger = logging.getLogger('robomania.cogs.announcements')

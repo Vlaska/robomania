@@ -9,7 +9,7 @@ from disnake.ext import commands
 
 from robomania.bot import Robomania
 from robomania.config import Config
-from robomania.types.picrew_model import PicrewModel
+from robomania.models.picrew_model import PicrewModel
 from robomania.types.post import Post
 from robomania.utils.exceptions import DuplicateError
 

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Any, Protocol, Type, TypeVar
+from typing import (TYPE_CHECKING, Any, Protocol, Type, TypeVar,
+                    runtime_checkable)
 
 if TYPE_CHECKING:
     from pymongo.database import Database
@@ -23,3 +24,10 @@ class Model(Protocol):
     @abstractmethod
     def to_dict(self) -> dict[str, Any]:
         raise NotImplementedError
+
+
+@runtime_checkable
+class CollectionSetup(Protocol):
+    @staticmethod
+    def create_collections(db: Database) -> None:
+        pass

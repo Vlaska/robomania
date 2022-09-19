@@ -10,7 +10,7 @@ from disnake import User
 from pymongo.errors import WriteError
 
 from robomania.bot import Robomania
-from robomania.types.model import Model
+from robomania.models.model import Model
 from robomania.utils.exceptions import DuplicateError
 
 if TYPE_CHECKING:

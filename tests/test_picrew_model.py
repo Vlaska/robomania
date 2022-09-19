@@ -11,7 +11,7 @@ from faker import Faker
 from mongomock_motor import AsyncMongoMockClient
 from pytest_mock import MockerFixture
 
-from robomania.types.picrew_model import PicrewCountByPostStatus, PicrewModel
+from robomania.models.picrew_model import PicrewCountByPostStatus, PicrewModel
 
 if TYPE_CHECKING:
     from robomania.bot import Robomania

@@ -11,7 +11,7 @@ from faker import Faker
 from mongomock_motor import AsyncMongoMockClient
 
 from robomania.config import Config
-from robomania.types.facebook_post import FacebookPost, TFacebookPost
+from robomania.models.facebook_post import FacebookPost, TFacebookPost
 
 configuration = StringIO('''DEBUG=1''')
 
