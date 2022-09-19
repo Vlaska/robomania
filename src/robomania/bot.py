@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
 from datetime import datetime
 from pathlib import Path
+from typing import Generator, cast
 
 import disnake
 from disnake.ext import commands
 from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import MongoClient
 from pymongo.database import Database
 
 from robomania.config import Config
@@ -23,6 +26,7 @@ class Robomania(commands.Bot):
     announcements_last_checked: datetime = datetime(1, 1, 1)
     config: Config
     __bot: Robomania
+    __blocking_db_counter = 0
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -50,10 +54,27 @@ class Robomania(commands.Bot):
 
     def setup(self) -> None:
         self.i18n.load('locale/')
+        self.client = AsyncIOMotorClient(self._get_db_connection_url())
+
         if self.config.debug:
             self.reload = True
             self._sync_commands_debug = True
             self._test_guilds = [958823316850880512]
+
+    @contextlib.contextmanager
+    def blocking_db(self) -> Generator[MongoClient, None, None]:
+        if self.__blocking_db_counter == 0:
+            async_client = self.client
+            self.client = MongoClient(self._get_db_connection_url())
+
+        self.__blocking_db_counter += 1
+        try:
+            yield cast(MongoClient, self.client)
+        finally:
+            self.__blocking_db_counter -= 1
+            if self.__blocking_db_counter == 0:
+                self.client.close()
+                self.client = async_client
 
     @classmethod
     def load_config(cls, path: str | Path = '.env') -> None:
@@ -61,8 +82,6 @@ class Robomania(commands.Bot):
         cls.config.load_env(path)
 
     async def start(self, *args, **kwargs) -> None:
-        self.client = AsyncIOMotorClient(self._get_db_connection_url())
-
         if self.config.debug:
             logger.warning('Running in debug mode')
             self.loop.set_debug(True)
