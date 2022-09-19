@@ -161,11 +161,8 @@ class PicrewModel(Model):
         return PicrewCountByPostStatus.from_mongo_documents(results)
 
     @staticmethod
-    async def create_collections(db: Database) -> None:
+    def create_collections(db: Database) -> None:
         import pymongo
 
         col = db.picrew
-        await cast(
-            Awaitable,
-            col.create_index([('link', pymongo.TEXT)], unique=True)
-        )
+        col.create_index([('link', pymongo.TEXT)], unique=True)
