@@ -116,7 +116,7 @@ async def on_ready():
     logger.info(f'We have logged in as "{bot.user}"')
 
 
-def main(config_path: str | Path = '.env') -> None:
+def configure_bot(config_path: str | Path = '.env') -> None:
     bot.load_config(config_path)
 
     init_logger(logger, 'robomania.log')
@@ -129,8 +129,11 @@ def main(config_path: str | Path = '.env') -> None:
     if bot.config.debug:
         bot.load_extension('robomania.cogs.tester')
 
+
+def main() -> None:
     bot.run(bot.config.token)
 
 
 if __name__ == '__main__':
+    configure_bot()
     main()

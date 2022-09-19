@@ -4,10 +4,10 @@ from pathlib import Path
 
 import click
 
-from robomania.bot import main
+from robomania.bot import configure_bot, main
 
 
-@click.command()
+@click.group(invoke_without_command=True)
 @click.option(
     '-c',
     '--config',
@@ -22,9 +22,24 @@ from robomania.bot import main
         path_type=Path
     )
 )
-def run(config: Path) -> None:
-    main(config)
+@click.pass_context
+def cli(ctx: click.Context, config: Path) -> None:
+    configure_bot()
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(run)
+
+
+@cli.command()
+def setup_database() -> None:
+    from robomania.models import create_collections
+
+    create_collections()
+
+
+@cli.command()
+def run() -> None:
+    main()
 
 
 if __name__ == '__main__':
-    run()
+    cli()
