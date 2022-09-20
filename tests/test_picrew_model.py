@@ -45,7 +45,7 @@ class TestPicrewModel:
     @pytest.fixture
     def raw_model(self, user) -> dict:
         out = self.document.copy()
-        out['user'] = user.id
+        out['user'] = user
         return out
 
     @pytest.fixture
@@ -98,6 +98,19 @@ class TestPicrewModel:
 
         assert model.to_dict() == result
 
+    def test_to_raw(self, user, raw_model: dict) -> None:
+        model = PicrewModel(
+            user=user,
+            link='https://example.org',
+            add_date=self.date,
+            was_posted=True,
+        )
+        result = raw_model.copy()
+        result.pop('_id')
+        result['user'] = raw_model['user'].id
+
+        assert model.to_raw() == result
+
     def test_from_raw(self, raw_model, model: PicrewModel) -> None:
         id = ObjectId.from_datetime(self.date)
         raw_model['_id'] = id
@@ -140,12 +153,12 @@ class TestPicrewModel:
         faker: Faker,
         user
     ) -> None:
-        data = [self.create(faker, True, user).to_dict() for _ in range(6)]
+        data = [self.create(faker, True, user).to_raw() for _ in range(6)]
         ids = set()
 
         for _ in range(3):
             t = self.create(faker, False, user)
-            data.append(t.to_dict())
+            data.append(t.to_raw())
             ids.add(t.id)
 
         await client.db.picrew.insert_many(data)

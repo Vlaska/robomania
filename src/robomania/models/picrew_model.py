@@ -57,7 +57,7 @@ class PicrewModel(Model):
         out = asdict(self)
 
         if self.user:
-            out['user'] = self.user.id
+            out['user'] = self.user
 
         id = out.pop('id', None)
 
@@ -65,6 +65,20 @@ class PicrewModel(Model):
             out['_id'] = id
 
         return out
+
+    def to_raw(self) -> dict[str, Any]:
+        out = self.to_dict()
+        if (user := out['user']) is not None:
+            out['user'] = user.id
+
+        return out
+
+    async def set_to_posted(self, db: Database) -> None:
+        if self.was_posted:
+            return
+
+        self.was_posted = True
+        await self.save(db)
 
     @classmethod
     def from_raw(cls, post: dict[str, Any]) -> PicrewModel:
@@ -78,7 +92,7 @@ class PicrewModel(Model):
 
     async def save(self, db: Database) -> None:
         col = db.picrew
-        document = self.to_dict()
+        document = self.to_raw()
 
         if self.id:
             await cast(
