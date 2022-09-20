@@ -1,11 +1,13 @@
+# type: ignore[name-defined]
 from __future__ import annotations
 
+import datetime
 from typing import cast
 
 import disnake
 import validators
 from disnake import AllowedMentions, ApplicationCommandInteraction
-from disnake.ext import commands
+from disnake.ext import commands, tasks
 
 from robomania.bot import Robomania
 from robomania.config import Config
@@ -136,6 +138,20 @@ class Picrew(commands.Cog):
 
         post = PicrewPost(posts[0])
         await post.respond(inter)
+
+    @tasks.loop(time=datetime.time(15, tzinfo=Robomania.timezone))
+    async def automatic_post(self) -> None:
+        db = self.bot.get_db('robomania')
+
+        posts = await PicrewModel.get_random_unposted(db, 1)
+        if not posts:
+            return
+
+        tmp = posts[0]
+        post = PicrewPost(tmp)
+        await post.send(self.target_channel)
+
+        await tmp.set_to_posted(db)
 
 
 def setup(bot: Robomania) -> None:
