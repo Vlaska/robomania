@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Generator, cast
 
 import disnake
+import pytz
 from disnake.ext import commands
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import MongoClient
@@ -27,6 +28,7 @@ class Robomania(commands.Bot):
     config: Config
     __bot: Robomania
     __blocking_db_counter = 0
+    timezone = pytz.timezone('Europe/Warsaw')
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
