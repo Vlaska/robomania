@@ -24,7 +24,7 @@ from robomania.bot import configure_bot, main
 )
 @click.pass_context
 def cli(ctx: click.Context, config: Path) -> None:
-    configure_bot()
+    configure_bot(config)
     if ctx.invoked_subcommand is None:
         ctx.invoke(run)
 
