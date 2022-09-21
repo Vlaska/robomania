@@ -12,9 +12,9 @@ class Config:
     token: Annotated[str, 'DISCORD_TOKEN']
     db_username: Annotated[str, 'DB_USERNAME']
     db_password: Annotated[str, 'DB_PASSWORD']
-    db_auth_db: Annotated[str, 'DB_AUTH_DB']
+    db_auth_db: Annotated[str, 'DB_AUTH_DB', '']
     db_host: Annotated[str, 'DB_HOST']
-    db_port: Annotated[int, 'DB_PORT']
+    db_port: Annotated[int, 'DB_PORT', 0]
     announcements_target_channel: Annotated[
         int,
         'ANNOUNCEMENTS_TARGET_CHANNEL'
