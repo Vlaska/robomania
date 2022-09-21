@@ -32,10 +32,16 @@ class PicrewPost:
         else:
             user_mention = '*nieznany*'
 
-        self.post = Post(
-            f'{self.picrew_info.link}\n'
+        tw = ''
+        if info.tw:
+            tw = f'TW: {info.tw}\n'
+
+        post_text = (
+            f'{self.picrew_info.link}\n{tw}'
             f'Post link dodany przez: {user_mention}'
         )
+
+        self.post = Post(post_text)
 
     async def send(self, channel: disnake.TextChannel) -> None:
         await self.post.send(channel, allowed_mentions=self.mentions)
@@ -67,6 +73,7 @@ class Picrew(commands.Cog):
         self,
         inter: ApplicationCommandInteraction,
         url: str,
+        tw: str = None,
     ) -> None:
         """
         Add a new Picrew link to post later. {{ ADD_PICREW }}
@@ -77,6 +84,8 @@ class Picrew(commands.Cog):
             Command interaction
         url : :class:`str`
             Picrew link, must be valid url {{ ADD_PICREW_URL }}
+        tw : :class:`str`
+            Trigger warning {{ ADD_PICREW_TW }}
         """
         if not validators.url(url) or 'picrew.me' not in url:
             await inter.send(
@@ -86,7 +95,7 @@ class Picrew(commands.Cog):
 
         await inter.response.defer()
 
-        picrew = PicrewModel(inter.user, url, inter.created_at, False)
+        picrew = PicrewModel(inter.user, url, inter.created_at, False, tw=tw)
 
         try:
             await picrew.save(self.bot.get_db('robomania'))
@@ -131,7 +140,7 @@ class Picrew(commands.Cog):
 
         await inter.response.defer()
 
-        posts = await PicrewModel.get_random_unposted(db, 1)
+        posts = await PicrewModel.get_random(db, 1)
         if not posts:
             await inter.followup.send(
                 'Brak linków do wysłania.'

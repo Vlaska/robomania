@@ -52,6 +52,7 @@ class PicrewModel(Model):
     add_date: datetime
     was_posted: bool
     id: ObjectId = field(default=None)
+    tw: str | None = field(default=None)
 
     def to_dict(self) -> dict[str, Any]:
         out = asdict(self)
@@ -159,6 +160,18 @@ class PicrewModel(Model):
         return await cls.get(db, pipeline)
 
     @classmethod
+    async def get_random(
+        cls,
+        db: Database,
+        count: int
+    ) -> list[PicrewModel]:
+        pipeline: list[dict] = [
+            {'$sample': {'size': count}}
+        ]
+
+        return await cls.get(db, pipeline)
+
+    @classmethod
     async def count_posted_and_not_posted(
         cls,
         db: Database
@@ -179,4 +192,4 @@ class PicrewModel(Model):
         import pymongo
 
         col = db.picrew
-        col.create_index([('link', pymongo.TEXT)], unique=True)
+        col.create_index([('link', pymongo.DESCENDING)], unique=True)

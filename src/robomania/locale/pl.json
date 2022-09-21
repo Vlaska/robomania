@@ -6,6 +6,8 @@
     "PICREW_STATUS_RESPONSE": "Obecnie {not_posted} linków czeka w kolejce.",
     "PICREW_STATUS_NAME": "status",
     "PICREW_STATUS_DESCRIPTION": "Pokaż informacje na temat linków Picrew.",
-    "PICREW_SEND_NAME": "send",
-    "PICREW_SEND_DESCRIPTION": "Pokaż informacje na temat linków Picrew."
+    "PICREW_SEND_NAME": "postuj",
+    "PICREW_SEND_DESCRIPTION": "Wyślij losowy picrew.",
+    "ADD_PICREW_TW_NAME": "tw",
+    "ADD_PICREW_TW_DESCRIPTION": "Trigger warning"
 }

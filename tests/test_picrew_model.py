@@ -40,6 +40,7 @@ class TestPicrewModel:
         'add_date': date,
         'was_posted': True,
         '_id': None,
+        'tw': None,
     }
 
     @pytest.fixture
@@ -56,6 +57,7 @@ class TestPicrewModel:
             raw_model['add_date'],
             raw_model['was_posted'],
             raw_model['_id'],
+            raw_model['tw'],
         )
 
     @pytest.fixture
