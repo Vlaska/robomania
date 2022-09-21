@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import contextlib
 import logging
-import os
 from datetime import datetime
 from importlib import resources
 from pathlib import Path
@@ -37,12 +36,12 @@ class Robomania(commands.Bot):
 
     @staticmethod
     def _get_db_connection_url() -> str:
-        username = os.getenv('DB_USERNAME')
-        password = os.getenv('DB_PASSWORD')
+        username = Config.db_username
+        password = Config.db_password
 
-        host = os.getenv('DB_HOST')
-        port = os.getenv('DB_PORT', '')
-        auth_db = os.getenv('DB_AUTH_DB', '')
+        host = Config.db_host
+        port = Config.db_port
+        auth_db = Config.db_auth_db
 
         if port:
             port = f':{port}'
