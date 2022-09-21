@@ -40,7 +40,7 @@ class Announcements(commands.Cog):
             self.check_for_announcements.start()
 
     @tasks.loop(time=[
-        datetime.time(hour=h, minute=m, tzinfo=Robomania.timezone)
+        datetime.time(hour=h, minute=m)
         for h, m in product(
             range(*checking_interval_hours),
             check_every_minutes
