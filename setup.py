@@ -6,4 +6,5 @@ setup(
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
     zip_safe=True,
+    package_data={'robomania': ['locale/*.json']},
 )

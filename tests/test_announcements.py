@@ -9,8 +9,8 @@ from faker import Faker
 from pytest_mock import MockerFixture
 
 from robomania.cogs import announcements
+from robomania.models.facebook_post import FacebookPost
 from robomania.types import announcement_post
-from robomania.types.facebook_post import FacebookPost
 
 if TYPE_CHECKING:
     from .conftest import TPostFactory, TRawPostFactory

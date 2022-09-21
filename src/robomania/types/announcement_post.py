@@ -5,7 +5,7 @@ from typing import Iterable
 
 import disnake
 
-from robomania.types.facebook_post import FacebookPost
+from robomania.models.facebook_post import FacebookPost
 from robomania.types.post import Post
 
 logger = logging.getLogger('robomania.types')

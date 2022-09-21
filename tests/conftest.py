@@ -11,7 +11,7 @@ from faker import Faker
 from mongomock_motor import AsyncMongoMockClient
 
 from robomania.config import Config
-from robomania.types.facebook_post import FacebookPost, TFacebookPost
+from robomania.models.facebook_post import FacebookPost, TFacebookPost
 
 configuration = StringIO('''DEBUG=1''')
 
@@ -31,13 +31,22 @@ class _Bot:
     loop = asyncio.new_event_loop()
     config = Config
     Config.load_env('', stream=configuration)
+    bot: _Bot
 
     def __init__(self, client):
         self.client = client
         self.announcements_last_checked = datetime(2009, 4, 13, 12, 6, 10)
+        self.__class__.bot = self
 
     def get_db(self, name: str) -> Any:
         return self.client[name]
+
+    @classmethod
+    def get_bot(cls) -> _Bot:
+        return cls.bot
+
+    def get_user(self, id: int):
+        pass
 
 
 class RawPostFactory(dict):

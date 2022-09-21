@@ -93,7 +93,9 @@ class PostDownloader:
     @staticmethod
     def preconfigure() -> None:
         from facebook_scraper import _scraper
-        _scraper.session.headers.update({'Accept-Language': 'en-US,en;q=0.5'})
+        locale = {'Accept-Language': 'en-US,en;q=0.5'}
+        _scraper.session.headers.update(locale)
+        _scraper.default_headers.update(locale)
 
         if Config.scraper_user_agent:
             _scraper.set_user_agent(Config.scraper_user_agent)

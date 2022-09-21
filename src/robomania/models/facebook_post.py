@@ -125,14 +125,11 @@ class FacebookPost:
         )
 
     @staticmethod
-    async def create_collections(db: Database) -> None:
+    def create_collections(db: Database) -> None:
         import pymongo
 
         posts = db.posts
-        await cast(
-            Awaitable,
-            posts.create_index([('timestamp', pymongo.DESCENDING)])
-        )
+        posts.create_index([('timestamp', pymongo.DESCENDING)])
 
 
 FacebookPosts: TypeAlias = list[FacebookPost]
