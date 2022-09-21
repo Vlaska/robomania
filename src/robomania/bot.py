@@ -47,6 +47,7 @@ class Robomania(commands.Bot):
             port = f':{port}'
             protocol = 'mongodb'
         else:
+            port = ''
             protocol = 'mongodb+srv'
 
         return (
