@@ -4,6 +4,7 @@ import contextlib
 import logging
 import os
 from datetime import datetime
+from importlib import resources
 from pathlib import Path
 from typing import Generator, cast
 
@@ -55,7 +56,8 @@ class Robomania(commands.Bot):
         )
 
     def setup(self) -> None:
-        self.i18n.load('locale/')
+        locale_path = resources.path('robomania', 'locale')
+        self.i18n.load(locale_path)
         self.client = AsyncIOMotorClient(self._get_db_connection_url())
 
         if self.config.debug:
