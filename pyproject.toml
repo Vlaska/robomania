@@ -24,6 +24,7 @@ typing-extensions = "^4.3.0"
 attrs = "^22.1.0"
 validators = "^0.20.0"
 pytz = "^2022.2.1"
+pydantic = "^1.10.2"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^1.7.0"
@@ -31,6 +32,7 @@ flake8 = "^5.0.4"
 isort = "^5.10.1"
 mypy = "^0.971"
 types-pytz = "^2022.2.1.0"
+hypothesis = "^6.56.4"
 
 [tool.poetry.group.test]
 optional = true
