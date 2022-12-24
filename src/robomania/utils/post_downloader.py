@@ -7,7 +7,7 @@ from typing import Any, Iterator, cast
 
 from facebook_scraper import get_posts
 
-from robomania.config import Config
+from robomania import config
 from robomania.utils import preconfigure
 
 FBPost = dict[str, Any]
@@ -71,7 +71,7 @@ class PostDownloader:
                 get_posts,
                 fanpage,
                 page_limit=pages,
-                cookies=Config.facebook_cookies_path,
+                cookies=config.settings.facebook_cookies_path,
             )
         )
         return cls(loop, lazy_posts)
@@ -97,5 +97,5 @@ class PostDownloader:
         _scraper.session.headers.update(locale)
         _scraper.default_headers.update(locale)
 
-        if Config.scraper_user_agent:
-            _scraper.set_user_agent(Config.scraper_user_agent)
+        if config.settings.scraper_user_agent:
+            _scraper.set_user_agent(config.settings.scraper_user_agent)

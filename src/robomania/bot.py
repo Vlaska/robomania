@@ -14,7 +14,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import MongoClient
 from pymongo.database import Database
 
-from robomania.config import Config
+from robomania.config import Settings, settings
 from robomania.utils.exceptions import NoInstanceError
 
 intents = disnake.Intents.default()
@@ -25,7 +25,7 @@ intents.message_content = True
 class Robomania(commands.Bot):
     client: AsyncIOMotorClient
     announcements_last_checked: datetime = datetime(1, 1, 1)
-    config: Config
+    settings: Settings = settings
     __bot: Robomania
     __blocking_db_counter = 0
     timezone = pytz.timezone('Europe/Warsaw')
@@ -34,33 +34,12 @@ class Robomania(commands.Bot):
         super().__init__(*args, **kwargs)
         self.__class__.__bot = self
 
-    @staticmethod
-    def _get_db_connection_url() -> str:
-        username = Config.db_username
-        password = Config.db_password
-
-        host = Config.db_host
-        port = Config.db_port
-        auth_db = Config.db_auth_db
-
-        if port:
-            port = f':{port}'
-            protocol = 'mongodb'
-        else:
-            port = ''
-            protocol = 'mongodb+srv'
-
-        return (
-            f'{protocol}://{username}:{password}@{host}{port}/{auth_db}?'
-            'retryWrites=true&w=majority'
-        )
-
     def setup(self) -> None:
         locale_path = resources.path('robomania', 'locale')
         self.i18n.load(locale_path)
-        self.client = AsyncIOMotorClient(self._get_db_connection_url())
+        self.client = AsyncIOMotorClient(str(settings.db_url))
 
-        if self.config.debug:
+        if settings.debug:
             self.reload = True
             self._sync_commands_debug = True
             self._test_guilds = [958823316850880512]
@@ -80,20 +59,15 @@ class Robomania(commands.Bot):
                 self.client.close()
                 self.client = async_client
 
-    @classmethod
-    def load_config(cls, path: str | Path = '.env') -> None:
-        cls.config = Config()
-        cls.config.load_env(path)
-
     async def start(self, *args, **kwargs) -> None:
-        if self.config.debug:
+        if settings.debug:
             logger.warning('Running in debug mode')
             self.loop.set_debug(True)
 
         await super().start(*args, **kwargs)
 
     def get_db(self, name: str) -> Database:
-        if Config.debug:
+        if settings.debug:
             name = f'{name}-dev'
         return self.client[name]
 
@@ -116,9 +90,9 @@ logger = logging.getLogger('robomania')
 
 
 def init_logger(logger: logging.Logger, out_file: str) -> None:
-    logger.setLevel(logging.DEBUG if Config.debug else logging.INFO)
+    logger.setLevel(logging.DEBUG if settings.debug else logging.INFO)
 
-    log_folder = Config.log_folder
+    log_folder = settings.log_folder
     log_folder.mkdir(parents=True, exist_ok=True)
 
     handler = logging.FileHandler(
@@ -140,8 +114,6 @@ async def on_ready():
 
 
 def configure_bot(config_path: str | Path = '.env') -> None:
-    bot.load_config(config_path)
-
     init_logger(logger, 'robomania.log')
     init_logger(logging.getLogger('disnake'), 'disnake.log')
 
@@ -149,12 +121,13 @@ def configure_bot(config_path: str | Path = '.env') -> None:
 
     bot.load_extension('robomania.cogs.announcements')
     bot.load_extension('robomania.cogs.picrew')
-    if bot.config.debug:
+
+    if settings.debug:
         bot.load_extension('robomania.cogs.tester')
 
 
 def main() -> None:
-    bot.run(bot.config.token)
+    bot.run(settings.discord_token.get_secret_value())
 
 
 if __name__ == '__main__':

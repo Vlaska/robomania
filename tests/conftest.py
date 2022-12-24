@@ -10,7 +10,7 @@ import pytest
 from faker import Faker
 from mongomock_motor import AsyncMongoMockClient
 
-from robomania.config import Config
+from robomania import config
 from robomania.models.facebook_post import FacebookPost, TFacebookPost
 
 configuration = StringIO('''DEBUG=1''')
@@ -29,8 +29,7 @@ class FBPost:
 
 class _Bot:
     loop = asyncio.new_event_loop()
-    config = Config
-    Config.load_env('', stream=configuration)
+    settings = config.settings
     bot: _Bot
 
     def __init__(self, client):
@@ -101,8 +100,17 @@ TPostFactory = Type[DummyFacebookPost]
 TRawPostFactory = Type[RawPostFactory]
 
 
+@pytest.fixture(scope='session')
+def set_settings():
+    config.settings = config.BasicSettings(
+        debug=True,
+        announcements_target_channel=0,
+        facebook_cookies_path='',
+    )
+
+
 @pytest.fixture
-def bot(client) -> _Bot:
+def bot(client, set_settings) -> _Bot:
     return _Bot(client)
 
 
