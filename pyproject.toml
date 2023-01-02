@@ -25,6 +25,7 @@ attrs = "^22.1.0"
 validators = "^0.20.0"
 pytz = "^2022.2.1"
 pydantic = "^1.10.2"
+Arpeggio = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^1.7.0"
