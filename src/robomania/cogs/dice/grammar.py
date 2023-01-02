@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from arpeggio import EOF, OneOrMore, Optional, PTNodeVisitor
+from arpeggio import EOF, OneOrMore, Optional, ParserPython, PTNodeVisitor
 from arpeggio import RegExMatch as _
+from arpeggio import visit_parse_tree
 
 from robomania.cogs.dice.dice import DiceBase, DiceWithModifier
 
@@ -34,6 +35,9 @@ def dice():
     return OneOrMore(dices), EOF
 
 
+grammar_parser = ParserPython(dice)
+
+
 class DiceVisitor(PTNodeVisitor):
     def visit_number(self, node, children) -> int:
         return int(node.value)
@@ -45,13 +49,13 @@ class DiceVisitor(PTNodeVisitor):
         else:
             multiplyer, _, base = children
 
-        return DiceBase(multiplyer=multiplyer, base=base)
+        return DiceBase(num_of_dice=multiplyer, base=base)
 
     def visit_dice_with_mod(self, node, children) -> DiceWithModifier:
         dice: DiceBase
         sign: str
         mod: int
-        print(children)
+
         dice, sign, mod = children
 
         if sign == '-':
@@ -61,3 +65,8 @@ class DiceVisitor(PTNodeVisitor):
 
     def visit_dice(self, node, children):
         return children
+
+
+def parse(dice: str) -> list[DiceBase | DiceWithModifier]:
+    tree = grammar_parser.parse(dice)
+    return visit_parse_tree(tree, DiceVisitor())

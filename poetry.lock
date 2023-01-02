@@ -1458,6 +1458,7 @@ mongomock = [
 ]
 mongomock-motor = [
     {file = "mongomock_motor-0.0.12-py3-none-any.whl", hash = "sha256:c2e27fe2ad0c1376922579abed0011fb32c4c022f57db85cefad5f6b02ffe055"},
+    {file = "mongomock_motor-0.0.12-py3.8.egg", hash = "sha256:3a1d4402f961385d19b5d676338256016cfb9907c01058b8f03dfcf5b5231570"},
     {file = "mongomock_motor-0.0.12.tar.gz", hash = "sha256:55dbf7bd76f4885c48fc48aa3a1de75d9e8fd2f5570ebb5e80316c621c260a1f"},
 ]
 motor = [

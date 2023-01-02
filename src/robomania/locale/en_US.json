@@ -3,5 +3,9 @@
     "ADD_PICREW_DESCRIPTION": "Add a new Picrew link to post later.",
     "ADD_PICREW_URL_NAME": "link",
     "ADD_PICREW_URL_DESCRIPTION": "Picrew link, must be valid url",
-    "PICREW_STATUS_RESPONSE": "Right now {not_posted} links are in queue."
+    "PICREW_STATUS_RESPONSE": "Right now {not_posted} links are in queue.",
+    "DICE_ROLL_NAME": "roll",
+    "DICE_ROLL_DESCRIPTION": "Roll dice using any base.",
+    "DICE_TO_ROLL_NAME": "dice",
+    "DICE_TO_ROLL_DESCRIPTION": "Dice to roll. Can be provided as one string. Ex.: \"5d10 + 3 6d6 - 1\" will result in two rolls."
 }

@@ -80,7 +80,7 @@ class Settings(BasicSettings):
 
     @validator('db_url')
     def validate_url(
-        cls,
+        cls,  # noqa: N805
         v: str | None,
         values: dict[str, Any]
     ) -> MongoDsn:
