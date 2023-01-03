@@ -10,8 +10,8 @@ import validators
 from disnake import AllowedMentions, ApplicationCommandInteraction
 from disnake.ext import commands, tasks
 
+from robomania import config
 from robomania.bot import Robomania
-from robomania.config import Config
 from robomania.models.picrew_model import PicrewModel
 from robomania.types.post import Post
 from robomania.utils.exceptions import DuplicateError
@@ -57,7 +57,7 @@ class Picrew(commands.Cog):
     def __init__(self, bot: Robomania) -> None:
         self.bot = bot
 
-        target_channel_id = Config.picrew_target_channel
+        target_channel_id = config.settings.picrew_target_channel
         self.target_channel = cast(
             disnake.TextChannel,
             self.bot.get_channel(target_channel_id)
@@ -175,7 +175,7 @@ class Picrew(commands.Cog):
         await self.bot.wait_until_ready()
         if self.target_channel is None:
             self.target_channel = await self.bot.fetch_channel(
-                Config.picrew_target_channel
+                config.settings.picrew_target_channel
             )
 
 

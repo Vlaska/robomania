@@ -9,5 +9,9 @@
     "PICREW_SEND_NAME": "postuj",
     "PICREW_SEND_DESCRIPTION": "Wyślij losowy picrew.",
     "ADD_PICREW_TW_NAME": "tw",
-    "ADD_PICREW_TW_DESCRIPTION": "Trigger warning"
+    "ADD_PICREW_TW_DESCRIPTION": "Trigger warning",
+    "DICE_ROLL_NAME": "losuj",
+    "DICE_ROLL_DESCRIPTION": "Rzuć kośćmi o dowolnej podstawie.",
+    "DICE_TO_ROLL_NAME": "kości",
+    "DICE_TO_ROLL_DESCRIPTION": "Kości do wyrzucenia. Mogą one zostać podane w ciągu, np.:\"5k10 + 3 6d6 - 1\" poskutkuje dwoma rzutami."
 }

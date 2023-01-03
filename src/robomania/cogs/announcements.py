@@ -10,8 +10,8 @@ from typing import Awaitable, cast
 import disnake
 from disnake.ext import commands, tasks  # type: ignore[attr-defined]
 
+from robomania import config
 from robomania.bot import Robomania
-from robomania.config import Config
 from robomania.models.facebook_post import FacebookPost, FacebookPosts
 from robomania.types.announcement_post import AnnouncementPost
 from robomania.utils.post_downloader import PostDownloader
@@ -34,7 +34,7 @@ class Announcements(commands.Cog):
         self.bot = bot
         self.check_lock = asyncio.Lock()
 
-        self.target_channel_id = self.bot.config.announcements_target_channel
+        self.target_channel_id = config.settings.announcements_target_channel
 
         if not self._DISABLE_ANNOUNCEMENTS_LOOP:
             self.check_for_announcements.start()
@@ -121,7 +121,7 @@ class Announcements(commands.Cog):
     def cog_unload(self) -> None:
         self.check_for_announcements.stop()
 
-    if Config.debug:
+    if config.settings.debug:
         @commands.slash_command(name='check')
         async def command_posts(
             self,
