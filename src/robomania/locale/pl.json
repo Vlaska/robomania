@@ -13,5 +13,5 @@
     "DICE_ROLL_NAME": "losuj",
     "DICE_ROLL_DESCRIPTION": "Rzuć kośćmi o dowolnej podstawie.",
     "DICE_TO_ROLL_NAME": "kości",
-    "DICE_TO_ROLL_DESCRIPTION": "Kości do wyrzucenia. Mogą one zostać podane w ciągu, np.:\"5k10 + 3 6d6 - 1\" poskutkuje dwoma rzutami."
+    "DICE_TO_ROLL_DESCRIPTION": "Rzuć kośćmi o dowolnej podstawie. Przykład: \"5k10 + 3 6d6 - 1\" to dwa osobne rzuty."
 }
