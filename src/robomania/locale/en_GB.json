@@ -7,5 +7,5 @@
     "DICE_ROLL_NAME": "roll",
     "DICE_ROLL_DESCRIPTION": "Roll dice using any base.",
     "DICE_TO_ROLL_NAME": "dice",
-    "DICE_TO_ROLL_DESCRIPTION": "Dice to roll. Can be provided as one string. Ex.: \"5d10 + 3 6d6 - 1\" will result in two rolls."
+    "DICE_TO_ROLL_DESCRIPTION": "Dice to roll. Ex.: \"5d10 + 3 6d6 - 1\" will result in two rolls."
 }
