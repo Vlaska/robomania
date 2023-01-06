@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
-from typing import Any, Generic, TypeVar, Union, cast, overload
+from logging import getLogger
+from typing import Generic, TypeVar, Union, cast, overload
 
 import numpy as np
 
 T = TypeVar('T', bound=Union[int, list])
+logger = getLogger('robomania.cogs.dice')
 
 
 @dataclass(init=False)
@@ -26,7 +29,7 @@ class RollResult(Generic[T]):
         if isinstance(self.value, int):
             v = self.value
         else:
-            v = np.sum(self.value)  # type: ignore
+            v = int(np.sum(self.value))  # type: ignore
 
         return v
 
@@ -41,10 +44,16 @@ class RollResult(Generic[T]):
 
         return out
 
-    def __concat(self: RollResult[list], other: list) -> list:
+    def __concat(
+        self: RollResult[list],
+        other: list | RollResult[list]
+    ) -> list:
         if isinstance(self.value, int):
             raise ValueError('Cannot concat with int')
         else:
+            if isinstance(other, RollResult):
+                other = other.value
+
             out = self.value.copy()
             out.extend(other)
             return out
@@ -96,16 +105,14 @@ class RollResult(Generic[T]):
                 out = self.__sum() + other
             case list() if isinstance(self.value, int):
                 out = self.value + sum(other)
-            case list():
-                out = cast(RollResult[list], self).__concat(other)
             case RollResult(value=int()):
                 out = self.__sum() + cast(int, other.value)
             case RollResult(list()) if isinstance(self.value, int):
                 out = self.value + other.__sum()
-            case RollResult(list()):
+            case list() | RollResult(list()):
                 out = cast(
                     RollResult[list], self
-                ).__concat(cast(RollResult[list], other).value)
+                ).__concat(other)
             case _:
                 raise ValueError(f'+ opperator not supported: "{other!r}"')
 
@@ -132,15 +139,17 @@ class RollResult(Generic[T]):
     ) -> RollResult[list]:
         pass
 
-    def __radd__(self, other: Any):
+    def __radd__(self, other):
         if isinstance(other, (int, list)):
-            return RollResult(other) + self  # type: ignore
+            return RollResult(other) + self
 
         raise ValueError(f'+ operator not supported: "{other}"')
 
-    def __sub__(self, other: object) -> RollResult:
-        out: int
-        self_value = self.__sum()
+    @staticmethod
+    def __transform_other_to_int(
+        other: int | list | RollResult[int | list],
+        exception_message: str = 'Cannot transform to int'
+    ) -> int:
         match other:
             case int():
                 out = other
@@ -149,9 +158,80 @@ class RollResult(Generic[T]):
             case RollResult():
                 out = other.__sum()
             case _:
-                raise ValueError(f'- operator not supported: "{other!r}"')
+                raise ValueError(f'{exception_message}: "{other!r}"')
+
+        return out
+
+    def __sub__(
+        self,
+        other: int | list | RollResult[int | list]
+    ) -> RollResult[int]:
+        out = self.__transform_other_to_int(
+            other,
+            '- operator not supported'
+        )
+        self_value = self.__sum()
 
         return RollResult(self_value - out)
 
-    def __rsub__(self, other: object) -> RollResult:
+    def __rsub__(self, other: int | list) -> RollResult[int]:
         return -self.__sub__(other)
+
+    def __mul__(
+        self,
+        other: int | list | RollResult[int | list]
+    ) -> RollResult[int]:
+        out = self.__transform_other_to_int(
+            other,
+            '* operator not supported'
+        )
+        self_value = self.__sum()
+        return RollResult(self_value * out)
+
+    def __rmul__(self, other: int | list) -> RollResult[int]:
+        return self * other
+
+    def __truediv__(
+        self,
+        other: int | list | RollResult[int | list]
+    ) -> RollResult[int]:
+        out = self.__transform_other_to_int(other)
+        self_value = self.__sum()
+        if out == 0:
+            if (isinstance(other, int) or (isinstance(
+                    other, RollResult) and isinstance(other.value, int))):
+                raise ZeroDivisionError('Cannot divide by 0')
+            else:
+                warnings.warn(
+                    'Roll result or list evaluated to 0 during division',
+                    UserWarning
+                )
+                logger.warning(
+                    'Roll result or list evaluated to 0 during division, '
+                    'aborting division.'
+                )
+                out = 1
+
+        return RollResult(self_value // out)
+
+    def __rtruediv__(
+        self,
+        other: int | list
+    ) -> RollResult[int]:
+        out = self.__transform_other_to_int(other)
+        self_value = self.__sum()
+        if self_value == 0:
+            if isinstance(self.value, int):
+                raise ZeroDivisionError('Cannot divide by 0')
+            else:
+                warnings.warn(
+                    'Roll result or list evaluated to 0 during division',
+                    UserWarning
+                )
+                logger.warning(
+                    'Roll result or list evaluated to 0 during division, '
+                    'aborting division.'
+                )
+                self_value = 1
+
+        return RollResult(out // self_value)
