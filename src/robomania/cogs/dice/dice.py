@@ -4,26 +4,37 @@ import enum
 import operator
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Any, Callable, TypeAlias, cast
+from typing import Any, Callable, TypeAlias
 
 import numpy as np
 
+from robomania.cogs.dice.mods import (mod_drop_low, mod_explode, mod_keep_high,
+                                      mod_repeat, mod_sum)
 from robomania.cogs.dice.roll_result import RollResult
 
 
 class ModEnum(str, enum.Enum):
     priority: int
+    # `Any` shouldn't be as first argument, but mypy thinks it's a method,
+    # and complains about number of arguments
+    func: Callable[[Any, 'DiceExpression', int | None], RollResult]
 
-    EXPLODE = ('!', 0)
-    KEEP_HIGH = ('kh', 10)
-    DISCARD_LOW = ('dl', 10)
-    REPEAT = ('@', 20)
-    SUM = ('s', 20)
+    EXPLODE = ('!', 0, mod_explode)
+    KEEP_HIGH = ('kh', 10, mod_keep_high)
+    DISCARD_LOW = ('dl', 10, mod_drop_low)
+    REPEAT = ('@', 20, mod_repeat)
+    SUM = ('s', 20, mod_sum)
 
-    def __new__(cls, value: str, priority: int) -> ModEnum:
+    def __new__(
+        cls,
+        value: str,
+        priority: int,
+        func: Callable[['DiceExpression', int | None], RollResult]
+    ) -> ModEnum:
         obj = str.__new__(cls, [value])
         obj._value_ = value
         obj.priority = priority
+        obj.func = func  # type: ignore
         return obj
 
     def __repr__(self) -> str:
@@ -69,10 +80,11 @@ class Dice:
 
     @staticmethod
     def _roll(base: int, num_of_dice: int) -> list[int]:
-        return cast(
-            list[int],
-            list(np.random.randint(1, base + 1, num_of_dice, np.uint64))
-        )
+        return [
+            int(i)
+            for i
+            in np.random.randint(1, base + 1, num_of_dice, np.uint64)
+        ]
 
     def __str__(self) -> str:
         return f'{self.num_of_dice if self.num_of_dice else ""}d{self.base}'
@@ -88,7 +100,7 @@ class Mod:
         self.dice_expression = dice_expression
 
     def eval(self) -> RollResult:
-        return self.dice_expression.eval()
+        return self.mod.func(self.dice_expression, self.argument)
 
     def __str__(self) -> str:
         argument_str = '' if self.argument is None else str(self.argument)

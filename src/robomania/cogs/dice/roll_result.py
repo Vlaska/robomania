@@ -75,6 +75,9 @@ class RollResult(Generic[T]):
             else:
                 out.append(cast(int | list, i))
 
+        if len(out) == 1:
+            return out[0]
+
         return out
 
     @overload
