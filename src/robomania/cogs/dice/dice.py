@@ -31,7 +31,9 @@ class ModEnum(str, enum.Enum):
 
 
 class OperatorEnum(str, enum.Enum):
-    func: Callable[[Any, Any], Any]
+    # Should be only two `Any`, but mypy thinks it's a method, and complains
+    # about number of arguments
+    func: Callable[[Any, Any, Any], Any]
 
     PLUS = ('+', operator.add)
     MINUS = ('-', operator.sub)
@@ -69,7 +71,7 @@ class Dice:
     def _roll(base: int, num_of_dice: int) -> list[int]:
         return cast(
             list[int],
-            np.random.randint(1, base + 1, num_of_dice, np.uint64)
+            list(np.random.randint(1, base + 1, num_of_dice, np.uint64))
         )
 
     def __str__(self) -> str:
@@ -78,7 +80,7 @@ class Dice:
 
 @dataclass
 class Mod:
-    dice_expression: DiceExpression | None = field(init=False, default=None)
+    dice_expression: DiceExpression = field(init=False)
     mod: ModEnum
     argument: int | None = field(default=None)
 
@@ -86,14 +88,11 @@ class Mod:
         self.dice_expression = dice_expression
 
     def eval(self) -> RollResult:
-        pass
+        return self.dice_expression.eval()
 
     def __str__(self) -> str:
         argument_str = '' if self.argument is None else str(self.argument)
-        try:
-            return f'{self.dice_expression}{self.mod.value}{argument_str}'
-        except AttributeError:
-            return f'{self.mod.value}{argument_str}'
+        return f'{self.dice_expression}{self.mod.value}{argument_str}'
 
 
 @dataclass
@@ -102,7 +101,18 @@ class Expression:
     operators: list[OperatorEnum]
 
     def eval(self) -> RollResult:
-        pass
+        values = deque(self.values)
+        operators = deque(self.operators)
+
+        value = values.popleft().eval()
+
+        while values:
+            right_value = values.popleft().eval()
+            operator = operators.popleft()
+
+            value = operator.func(value, right_value)
+
+        return RollResult(value)
 
     def __str__(self) -> str:
         values = deque(self.values)
@@ -124,7 +134,7 @@ class Sequence:
     values: list[Expression]
 
     def eval(self) -> RollResult:
-        pass
+        return RollResult([i.eval() for i in self.values])
 
     def __str__(self) -> str:
         body_of_sequence = ', '.join(str(i) for i in self.values)
@@ -140,7 +150,15 @@ class Value:
     unary_operator: OperatorEnum = field(default=OperatorEnum.NONE)
 
     def eval(self) -> RollResult:
-        pass
+        if isinstance(self.value, int):
+            out = RollResult(self.value)
+        else:
+            out = self.value.eval()
+
+        if self.unary_operator is OperatorEnum.MINUS:
+            out = -out
+
+        return out
 
     def __str__(self) -> str:
         if isinstance(self.value, Expression):
@@ -154,8 +172,8 @@ class Value:
 class Roll:
     expressions: list[Expression]
 
-    def eval(self) -> list[RollResult]:
-        return [i.eval() for i in self.expressions]
+    def eval(self) -> RollResult:
+        return RollResult([i.eval() for i in self.expressions])
 
     def __str__(self) -> str:
         return ', '.join(str(i) for i in self.expressions)

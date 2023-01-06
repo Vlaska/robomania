@@ -90,13 +90,13 @@ class DiceVisitor(PTNodeVisitor):
         return dice_expression
 
     def visit_unary_operator(self, node, children) -> OperatorEnum:
-        return OperatorEnum(children[0])
+        return OperatorEnum(children[0])  # type: ignore
 
     def visit_binary_plus_minus(self, node, children) -> OperatorEnum:
-        return OperatorEnum(children[0])
+        return OperatorEnum(children[0])  # type: ignore
 
     def visit_binary_mul_div(self, node, children) -> OperatorEnum:
-        return OperatorEnum(children[0])
+        return OperatorEnum(children[0])  # type: ignore
 
     def visit_value(self, node, children) -> Value:
         unary: OperatorEnum = OperatorEnum.NONE
@@ -121,8 +121,8 @@ class DiceVisitor(PTNodeVisitor):
 
         return Expression(values, operators)
 
-    def visit_roll(self, node, children) -> list[Expression]:
-        return list(children)
+    def visit_roll(self, node, children) -> Roll:
+        return Roll(list(children))
 
 
 def parse(dice: str) -> Roll:
