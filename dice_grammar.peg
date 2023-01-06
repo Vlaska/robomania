@@ -1,0 +1,21 @@
+number = r'\d+'
+dice = number? r'd|k' number
+keep_discard = r'dl?' / r'kh?'
+explode = '!'
+repeat = '@' / 'r'
+sum = 's'
+mod = (keep_discard / explode / repeat / sum) number?
+
+dice_expression = (sequence / dice) mod*
+
+unary_operators = "+" / "-"
+binary_plus_minus = "+" / "-"
+binary_mul_div = "*" / "/"
+
+value = unary_operators? (dice_expression / number / ("(" expression ")"))
+
+sequence = "{" expression ("," expression)* "}"
+
+term = value (binary_mul_div term)*
+expression = term (binary_plus_minus term)*
+roll = expression ("," expression)* EOF

@@ -1,72 +1,130 @@
 from __future__ import annotations
 
-from arpeggio import EOF, OneOrMore, Optional, ParserPython, PTNodeVisitor
-from arpeggio import RegExMatch as _
-from arpeggio import visit_parse_tree
+from arpeggio import PTNodeVisitor, visit_parse_tree
+from arpeggio.cleanpeg import ParserPEG
 
-from robomania.cogs.dice.dice import DiceBase, DiceWithModifier
+from robomania.cogs.dice.dice import (Dice, DiceExpression, Expression, Mod,
+                                      ModEnum, OperatorEnum, Roll, Sequence,
+                                      Value)
 
+grammar = r"""
+number = r'\d+'
+dice = number? r'd|k' number
+keep_discard = r'dl?' / r'kh?'
+explode = '!'
+repeat = "@" / "r"
+sum = "s"
+mod = (keep_discard / explode / repeat / sum) number?
 
-def number():
-    return _(r'\d+')
+dice_expression = (sequence / dice) mod*
 
+unary_operators = "+" / "-"
+binary_plus_minus = "+" / "-"
+binary_mul_div = "*" / "/"
 
-def dice_marker():
-    return _(r'k|d')
+value = unary_operators? (dice_expression / number / ("(" expression ")"))
 
+sequence = "{" expression ("," expression)* "}"
 
-def dice_base():
-    return Optional(number), dice_marker, number
-
-
-def sign():
-    return Optional(['+', '-'])
-
-
-def dice_with_mod():
-    return dice_base, sign, number
-
-
-def dices():
-    return Optional([dice_with_mod, dice_base])
-
-
-def dice():
-    return OneOrMore(dices), EOF
+term = value (binary_mul_div term)*
+expression = term (binary_plus_minus term)*
+roll = expression ("," expression)* EOF
+"""
 
 
-grammar_parser = ParserPython(dice)
+grammar_parser = ParserPEG(grammar, 'roll')
 
 
 class DiceVisitor(PTNodeVisitor):
     def visit_number(self, node, children) -> int:
         return int(node.value)
 
-    def visit_dice_base(self, node, children: list[int]) -> DiceBase:
+    def visit_dice(self, node, children: list[int]) -> Dice:
         if len(children) == 2:
             multiplyer = 1
             base = children[1]
         else:
             multiplyer, _, base = children
 
-        return DiceBase(num_of_dice=multiplyer, base=base)
+        return Dice(base=base, num_of_dice=multiplyer)
 
-    def visit_dice_with_mod(self, node, children) -> DiceWithModifier:
-        dice: DiceBase
-        sign: str
-        mod: int
+    def visit_keep_discard(self, node, children) -> ModEnum:
+        match children[0]:
+            case 'd' | 'dl':
+                return ModEnum.DISCARD_LOW
+            case 'k' | 'kh':
+                return ModEnum.KEEP_HIGH
+            case _:
+                raise ValueError('WTF?')
 
-        dice, sign, mod = children
+    def visit_sum(self, node, children) -> ModEnum:
+        return ModEnum.SUM
 
-        if sign == '-':
-            mod *= -1
+    def visit_explode(self, node, children) -> ModEnum:
+        return ModEnum.EXPLODE
 
-        return DiceWithModifier(dice, mod)
+    def visit_repeat(self, node, children) -> ModEnum:
+        return ModEnum.REPEAT
 
-    def visit_dice(self, node, children):
-        return children
+    def visit_mod(self, node, children) -> Mod:
+        mod = children[0]
+
+        if len(children) == 2:
+            argument = children[1]
+        else:
+            argument = None
+
+        return Mod(mod, argument)
+
+    def visit_dice_expression(self, node, children) -> DiceExpression:
+        dice_expression: DiceExpression
+        mod: list[Mod]
+        dice_expression, *mod = children
+
+        mod.sort(key=lambda x: x.mod.priority)
+
+        for i in mod:
+            i.set_dice_expression(dice_expression)
+            dice_expression = i
+
+        return dice_expression
+
+    def visit_unary_operator(self, node, children) -> OperatorEnum:
+        return OperatorEnum(children[0])
+
+    def visit_binary_plus_minus(self, node, children) -> OperatorEnum:
+        return OperatorEnum(children[0])
+
+    def visit_binary_mul_div(self, node, children) -> OperatorEnum:
+        return OperatorEnum(children[0])
+
+    def visit_value(self, node, children) -> Value:
+        unary: OperatorEnum = OperatorEnum.NONE
+        v = children[-1]
+        if len(children) == 2:
+            unary = children[0]
+
+        return Value(v, unary)
+
+    def visit_sequence(self, node, children) -> Sequence:
+        return Sequence(list(children))
+
+    def visit_term(self, node, children) -> Expression:
+        values: list[Value] = children[::2]
+        operators: list[OperatorEnum] = children[1::2]
+
+        return Expression(values, operators)
+
+    def visit_expression(self, node, children) -> Expression:
+        values: list[Value] = children[::2]
+        operators: list[OperatorEnum] = children[1::2]
+
+        return Expression(values, operators)
+
+    def visit_roll(self, node, children) -> list[Expression]:
+        return list(children)
 
 
-def parse(dice: str) -> list[DiceBase | DiceWithModifier]:
+def parse(dice: str) -> Roll:
     tree = grammar_parser.parse(dice)
     return visit_parse_tree(tree, DiceVisitor())
