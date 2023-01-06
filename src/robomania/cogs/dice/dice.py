@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import enum
+import operator
 from collections import deque
 from dataclasses import dataclass, field
-from typing import TypeAlias, cast
+from typing import Any, Callable, TypeAlias, cast
 
 import numpy as np
 
@@ -30,11 +31,23 @@ class ModEnum(str, enum.Enum):
 
 
 class OperatorEnum(str, enum.Enum):
-    PLUS = '+'
-    MINUS = '-'
-    MUL = '*'
-    DIV = '/'
-    NONE = ''
+    func: Callable[[Any, Any], Any]
+
+    PLUS = ('+', operator.add)
+    MINUS = ('-', operator.sub)
+    MUL = ('*', operator.mul)
+    DIV = ('/', operator.truediv)
+    NONE = ('', lambda a, b: None)
+
+    def __new__(
+        cls,
+        value: str,
+        func: Callable[[Any, Any], Any]
+    ) -> OperatorEnum:
+        obj = str.__new__(cls, [value])
+        obj._value_ = value
+        obj.func = func  # type: ignore
+        return obj
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}.{self._name_}'
