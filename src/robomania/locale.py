@@ -23,6 +23,9 @@ class DefaultLocale(metaclass=DefaultLocaleMetaclass):
     INTERNAL_ERROR = 'Internal error.'
     DIVISION_BY_ZERO = 'Division by 0.'
 
+    POLL_TOO_MANY_OPTIONS = 'Only 10 options can be passed.'
+    POLL_CREATE_MESSAGE_TEMPLATE = '{user} created a poll: "{question}"'
+
     @classmethod
     def get(cls, name: str) -> str:
         out = cls.__dict__.get(name, None)

@@ -19,5 +19,15 @@
     "DICE_INTERNAL_DIV_BY_ZERO": "There was an internal division by 0 (likely caused by dividing by group). Because of that, division was aborted.",
     "DICE_MESSAGE_TOO_LONG": "Result of the roll was to long to be sent.",
     "INTERNAL_ERROR": "Internal error.",
-    "DIVISION_BY_ZERO": "Division by 0."
+    "DIVISION_BY_ZERO": "Division by 0.",
+    "POLL_CREATE_NAME": "poll",
+    "POLL_CREATE_DESCRIPTION": "Create a poll",
+    "POLL_QUESTION_NAME": "question",
+    "POLL_QUESTION_DESCRIPTION": "Question for a poll",
+    "POLL_OPTIONS_NAME": "options",
+    "POLL_OPTIONS_DESCRIPTION": "Options for poll separated with '|'",
+    "POLL_REACTIONS_NAME": "theme",
+    "POLL_REACTIONS_DESCRIPTION": "Style of reactions for options",
+    "POLL_OPTION_NUMBERS": "numbers",
+    "POLL_OPTION_HEARTS": "hearts"
 }

@@ -25,5 +25,21 @@
     "DICE_INTERNAL_DIV_BY_ZERO": "Podczas ewaluowania rzutu nastąpiło dzielenie przez 0 (prawdopodobnie spowodowane przez dzielenie przez grupę). Z tego powodu dzielenie zostało pominięte.",
     "DICE_MESSAGE_TOO_LONG": "Wynik rzutu przekroczył maksymalną długość wiadomości.",
     "INTERNAL_ERROR": "Nastąpił błąd wewnętrzny.",
-    "DIVISION_BY_ZERO": "Dzielenie przez 0."
+    "DIVISION_BY_ZERO": "Dzielenie przez 0.",
+    "POLL_CREATE_CREATED_BY_ON": "utworzył",
+    "POLL_CREATE_CREATED_BY_ONA": "utworzyła",
+    "POLL_CREATE_CREATED_BY_ONO": "utworzyło",
+    "POLL_CREATE_MESSAGE_WITH_PRONOUNS_TEMPLATE": "Użytkownik {user} {created} nową ankietę: \"{question}\"",
+    "POLL_CREATE_MESSAGE_TEMPLATE": "Ankieta stworzona przez użytkownika {user}: \"{question}\"",
+    "POLL_TOO_MANY_OPTIONS": "Można podać tylko 10 opcji.",
+    "POLL_CREATE_NAME": "ankieta",
+    "POLL_CREATE_DESCRIPTION": "Utwórz ankietę",
+    "POLL_QUESTION_NAME": "pytanie",
+    "POLL_QUESTION_DESCRIPTION": "Pytanie do ankiety",
+    "POLL_OPTIONS_NAME": "opcje",
+    "POLL_OPTIONS_DESCRIPTION": "Opcje do wyboru w ankiecie, odseparowane '|' pomiędzy nimi",
+    "POLL_REACTIONS_NAME": "styl",
+    "POLL_REACTIONS_DESCRIPTION": "Styl reakcji przypisanych do opcji",
+    "POLL_OPTION_NUMBERS": "liczby",
+    "POLL_OPTION_HEARTS": "serca"
 }

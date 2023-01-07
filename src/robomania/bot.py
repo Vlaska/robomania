@@ -42,6 +42,7 @@ class Robomania(commands.Bot):
         self.client = AsyncIOMotorClient(str(settings.db_url))
 
         if settings.debug:
+            logger.warning('Running in DEBUG mode.')
             self.reload = True
             self._sync_commands_debug = True
             self._test_guilds = [958823316850880512]
@@ -63,7 +64,6 @@ class Robomania(commands.Bot):
 
     async def start(self, *args, **kwargs) -> None:
         if settings.debug:
-            logger.warning('Running in debug mode')
             self.loop.set_debug(True)
 
         await super().start(*args, **kwargs)
@@ -161,6 +161,7 @@ def configure_bot(config_path: str | Path = '.env') -> None:
     # bot.load_extension('robomania.cogs.announcements')
     bot.load_extension('robomania.cogs.picrew')
     bot.load_extension('robomania.cogs.dice')
+    bot.load_extension('robomania.cogs.poll')
 
     if settings.debug:
         bot.load_extension('robomania.cogs.tester')
