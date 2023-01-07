@@ -20,6 +20,7 @@
     "DICE_MESSAGE_TOO_LONG": "Result of the roll was to long to be sent.",
     "INTERNAL_ERROR": "Internal error.",
     "DIVISION_BY_ZERO": "Division by 0.",
+    "POLL_TOO_MANY_OPTIONS": "Selected theme allows for {num_of_options} options.",
     "POLL_CREATE_NAME": "poll",
     "POLL_CREATE_DESCRIPTION": "Create a poll",
     "POLL_QUESTION_NAME": "question",
@@ -29,5 +30,7 @@
     "POLL_REACTIONS_NAME": "theme",
     "POLL_REACTIONS_DESCRIPTION": "Style of reactions for options",
     "POLL_OPTION_NUMBERS": "numbers",
-    "POLL_OPTION_HEARTS": "hearts"
+    "POLL_OPTION_HEARTS": "hearts",
+    "POLL_OPTION_LIKE": "like",
+    "POLL_OPTION_YES_NO": "yes no"
 }
