@@ -1,12 +1,12 @@
 [project]
 name = "Robomania"
-version = "0.3.1"
+version = "0.4.0"
 description = "Bot for use on Domeq Krk discord server"
 requires-python = ">=3.10"
 
 [tool.poetry]
 name = "Robomania"
-version = "0.3.1"
+version = "0.4.0"
 description = "Bot for discord server"
 authors = ["Your Name <you@example.com>"]
 
@@ -26,6 +26,7 @@ validators = "^0.20.0"
 pytz = "^2022.2.1"
 pydantic = "^1.10.2"
 Arpeggio = "^2.0.0"
+numpy = "^1.24.1"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^1.7.0"
@@ -65,7 +66,8 @@ show_error_codes = true
 ignore_missing_imports = true
 plugins = [
     "disnake.ext.mypy_plugin",
-    "pydantic.mypy"
+    "pydantic.mypy",
+    "numpy.typing.mypy_plugin"
 ]
 
 [tool.autopep8]

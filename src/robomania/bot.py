@@ -1,3 +1,4 @@
+# type: ignore[name-defined]
 from __future__ import annotations
 
 import contextlib
@@ -5,7 +6,7 @@ import logging
 from datetime import datetime
 from importlib import resources
 from pathlib import Path
-from typing import Generator, cast
+from typing import Callable, Generator, cast
 
 import disnake
 import pytz
@@ -15,6 +16,7 @@ from pymongo import MongoClient
 from pymongo.database import Database
 
 from robomania.config import Settings, settings
+from robomania.locale import DefaultLocale
 from robomania.utils.exceptions import NoInstanceError
 
 intents = disnake.Intents.default()
@@ -40,6 +42,7 @@ class Robomania(commands.Bot):
         self.client = AsyncIOMotorClient(str(settings.db_url))
 
         if settings.debug:
+            logger.warning('Running in DEBUG mode.')
             self.reload = True
             self._sync_commands_debug = True
             self._test_guilds = [958823316850880512]
@@ -61,7 +64,6 @@ class Robomania(commands.Bot):
 
     async def start(self, *args, **kwargs) -> None:
         if settings.debug:
-            logger.warning('Running in debug mode')
             self.loop.set_debug(True)
 
         await super().start(*args, **kwargs)
@@ -77,6 +79,43 @@ class Robomania(commands.Bot):
             return cls.__bot
         except AttributeError:
             raise NoInstanceError('No bot instance was created.')
+
+    def tr(
+        self,
+        key: str,
+        locale: disnake.enums.Locale,
+        default: str | None = None
+    ) -> str:
+        logger.debug(f'Get translation: {{"{locale}": "{key}"}}')
+        try:
+            translations = self.i18n.get(key)
+            value = translations.get(locale.value, None)
+        except (disnake.LocalizationKeyError, AttributeError):
+            logger.warning(
+                f'Missing localization for key: "{key}"'
+            )
+            value = None
+
+        if value is None:
+            logger.warning(
+                f'Missing localization for key: "{key}" for "{locale}" locale'
+            )
+            value = DefaultLocale.get(key)
+
+        if value == key and default:
+            return default
+
+        return value
+
+    @contextlib.contextmanager
+    def localize(
+        self,
+        locale: disnake.enums.Locale
+    ) -> Generator[Callable[[str, str | None], str], None, None]:
+        def tr(key: str, default: str | None = None) -> str:
+            return self.tr(key, locale, default)
+
+        yield tr
 
 
 bot = Robomania(
@@ -122,6 +161,7 @@ def configure_bot(config_path: str | Path = '.env') -> None:
     # bot.load_extension('robomania.cogs.announcements')
     bot.load_extension('robomania.cogs.picrew')
     bot.load_extension('robomania.cogs.dice')
+    bot.load_extension('robomania.cogs.poll')
 
     if settings.debug:
         bot.load_extension('robomania.cogs.tester')
