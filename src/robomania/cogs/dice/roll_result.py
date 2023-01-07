@@ -7,6 +7,8 @@ from typing import Generic, TypeVar, Union, cast, overload
 
 import numpy as np
 
+from robomania.utils.exceptions import DivByZeroWarning
+
 T = TypeVar('T', bound=Union[int, list])
 logger = getLogger('robomania.cogs.dice')
 
@@ -49,7 +51,10 @@ class RollResult(Generic[T]):
         other: list | RollResult[list]
     ) -> list:
         if isinstance(self.value, int):
-            raise ValueError('Cannot concat with int')
+            raise ValueError(
+                'Cannot concat with int',
+                'DICE_INCORRECT_EXPRESSION'
+            )
         else:
             if isinstance(other, RollResult):
                 other = other.value
@@ -60,7 +65,10 @@ class RollResult(Generic[T]):
 
     def __neg__(self) -> RollResult:
         if isinstance(self.value, list):
-            raise ValueError('Cannot negate a list')
+            raise ValueError(
+                'Cannot negate a group',
+                'DICE_CANNOT_NEGATE_GROUP'
+            )
 
         return RollResult(-cast(int, self.value))
 
@@ -117,7 +125,10 @@ class RollResult(Generic[T]):
                     RollResult[list], self
                 ).__concat(other)
             case _:
-                raise ValueError(f'+ opperator not supported: "{other!r}"')
+                raise ValueError(
+                    f'+ opperator not supported: "{other!r}"'
+                    'DICE_INCORRECT_EXPRESSION'
+                )
 
         return RollResult(out)
 
@@ -146,7 +157,10 @@ class RollResult(Generic[T]):
         if isinstance(other, (int, list)):
             return RollResult(other) + self
 
-        raise ValueError(f'+ operator not supported: "{other}"')
+        raise ValueError(
+            f'+ operator not supported: "{other}"',
+            'DICE_INCORRECT_EXPRESSION'
+        )
 
     @staticmethod
     def __transform_other_to_int(
@@ -161,7 +175,10 @@ class RollResult(Generic[T]):
             case RollResult():
                 out = other.__sum()
             case _:
-                raise ValueError(f'{exception_message}: "{other!r}"')
+                raise ValueError(
+                    f'{exception_message}: "{other!r}"',
+                    'DICE_INCORRECT_EXPRESSION'
+                )
 
         return out
 
@@ -207,7 +224,7 @@ class RollResult(Generic[T]):
             else:
                 warnings.warn(
                     'Roll result or list evaluated to 0 during division',
-                    UserWarning
+                    DivByZeroWarning
                 )
                 logger.warning(
                     'Roll result or list evaluated to 0 during division, '
@@ -229,7 +246,7 @@ class RollResult(Generic[T]):
             else:
                 warnings.warn(
                     'Roll result or list evaluated to 0 during division',
-                    UserWarning
+                    DivByZeroWarning
                 )
                 logger.warning(
                     'Roll result or list evaluated to 0 during division, '

@@ -10,7 +10,10 @@ if TYPE_CHECKING:
 
 def mod_repeat(expression: DiceExpression, argument: int | None) -> RollResult:
     if argument is None or argument <= 0:
-        raise ValueError('Repeat required positive argument.')
+        raise ValueError(
+            'Repeat requires positive argument.',
+            'DICE_REPEAT_ARGUMENT',
+        )
 
     return RollResult([expression.eval() for _ in range(argument)])
 
@@ -23,9 +26,15 @@ def mod_explode(
     try:
         num_of_explosions = dice.num_of_dice
     except AttributeError:
-        if dice.mod.value == '!':  # type: ignore
-            return dice.eval()
-        raise ValueError('Only dice can explode.')
+        try:
+            if dice.mod.value == '!':  # type: ignore
+                return dice.eval()
+        except AttributeError:
+            pass
+        raise ValueError(
+            'Cannot explode a group.',
+            'DICE_EXPLOSION_DICE_ONLY'
+        )
 
     out: RollResult[list[int]] = RollResult([])
 
@@ -52,7 +61,10 @@ def mod_drop_low(
     argument: int | None
 ) -> RollResult:
     if argument is None or argument <= 0:
-        raise ValueError('Repeat required positive argument.')
+        raise ValueError(
+            'Drop low required positive argument.',
+            'DICE_DROP_LOW_ARGUMENT'
+        )
 
     value: RollResult[int | list[int | list]] = expression.eval()
 
@@ -84,7 +96,10 @@ def mod_keep_high(
     argument: int | None
 ) -> RollResult:
     if argument is None or argument <= 0:
-        raise ValueError('Repeat required positive argument.')
+        raise ValueError(
+            'Keep high required positive argument.',
+            'DICE_KEEP_HIGH_ARGUMENT'
+        )
 
     value: RollResult[int | list[int | list]] = expression.eval()
 

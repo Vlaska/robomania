@@ -4,3 +4,7 @@ class NoInstanceError(Exception):
 
 class DuplicateError(Exception):
     """Raised when there is duplicate entry in database."""
+
+
+class DivByZeroWarning(Warning):
+    pass

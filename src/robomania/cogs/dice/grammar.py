@@ -18,11 +18,11 @@ mod = (keep_discard / explode / repeat / sum) number?
 
 dice_expression = (sequence / dice) mod*
 
-unary_operators = "+" / "-"
+unary_operator = "+" / "-"
 binary_plus_minus = "+" / "-"
 binary_mul_div = "*" / "/"
 
-value = unary_operators? (dice_expression / number / ("(" expression ")"))
+value = unary_operator? (dice_expression / number / ("(" expression ")"))
 
 sequence = "{" expression ("," expression)* "}"
 
@@ -55,7 +55,7 @@ class DiceVisitor(PTNodeVisitor):
             case 'k' | 'kh':
                 return ModEnum.KEEP_HIGH
             case _:
-                raise ValueError('WTF?')
+                raise ValueError('WTF?', 'WTF?')
 
     def visit_sum(self, node, children) -> ModEnum:
         return ModEnum.SUM

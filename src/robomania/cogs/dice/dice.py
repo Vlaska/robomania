@@ -185,7 +185,10 @@ class Roll:
     expressions: list[Expression]
 
     def eval(self) -> RollResult:
-        return RollResult([i.eval() for i in self.expressions])
+        return RollResult(self.eval_to_list())
+
+    def eval_to_list(self) -> list[RollResult]:
+        return [i.eval() for i in self.expressions]
 
     def __str__(self) -> str:
         return ', '.join(str(i) for i in self.expressions)
