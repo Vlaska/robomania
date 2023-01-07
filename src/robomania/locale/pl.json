@@ -13,5 +13,17 @@
     "DICE_ROLL_NAME": "losuj",
     "DICE_ROLL_DESCRIPTION": "Rzuć kośćmi o dowolnej podstawie.",
     "DICE_TO_ROLL_NAME": "kości",
-    "DICE_TO_ROLL_DESCRIPTION": "Rzuć kośćmi o dowolnej podstawie. Przykład: \"5k10 + 3 6d6 - 1\" to dwa osobne rzuty."
+    "DICE_TO_ROLL_DESCRIPTION": "Rzuć kośćmi o dowolnej podstawie. Przykład: \"5k10 + 3 6d6 - 1\" to dwa osobne rzuty.",
+    "DICE_HIDE_ROLL_NAME": "ukryj",
+    "DICE_HIDE_ROLL_DESCRIPTION": "Rzut będzie widoczny tylko dla Ciebie.",
+    "DICE_INCORRECT_EXPRESSION": "Nieprawidłowe wyrażenie.",
+    "DICE_EXPLOSION_DICE_ONLY": "Mod \"explode\" może być użyty tylko z kośćmi.",
+    "DICE_REPEAT_ARGUMENT": "Mod \"repeat\" wymaga dodatniego argumentu.",
+    "DICE_DROP_LOW_ARGUMENT": "Mod \"drop low\" wymaga dodatniego argumentu.",
+    "DICE_KEEP_HIGH_ARGUMENT": "Mod \"keep high\" wymaga dodatniego argumentu.",
+    "DICE_CANNOT_NEGATE_GROUP": "Nie można zanegować grupy.",
+    "DICE_INTERNAL_DIV_BY_ZERO": "Podczas ewaluowania rzutu nastąpiło dzielenie przez 0 (prawdopodobnie spowodowane przez dzielenie przez grupę). Z tego powodu dzielenie zostało pominięte.",
+    "DICE_MESSAGE_TOO_LONG": "Wynik rzutu przekroczył maksymalną długość wiadomości.",
+    "INTERNAL_ERROR": "Nastąpił błąd wewnętrzny.",
+    "DIVISION_BY_ZERO": "Dzielenie przez 0."
 }
