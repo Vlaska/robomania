@@ -29,7 +29,7 @@
     "POLL_CREATE_CREATED_BY_ON": "utworzył",
     "POLL_CREATE_CREATED_BY_ONA": "utworzyła",
     "POLL_CREATE_CREATED_BY_ONO": "utworzyło",
-    "POLL_CREATE_MESSAGE_WITH_PRONOUNS_TEMPLATE": "Użytkownik {user} {created} nową ankietę: \"{question}\"",
+    "POLL_CREATE_MESSAGE_WITH_PRONOUNS_TEMPLATE": "{user} {created} nową ankietę: \"{question}\"",
     "POLL_CREATE_MESSAGE_TEMPLATE": "Ankieta stworzona przez użytkownika {user}: \"{question}\"",
     "POLL_TOO_MANY_OPTIONS": "Można podać tylko 10 opcji.",
     "POLL_CREATE_NAME": "ankieta",
