@@ -80,7 +80,7 @@ def mod_drop_low(
         in sorted(
             enumerate(value.value),
             key=lambda x: int(RollResult(x[1])),  # type: ignore
-            reverse=True
+            reverse=False
         )
     ][:argument]
     indexes_to_remove.sort(reverse=True)
@@ -113,7 +113,7 @@ def mod_keep_high(
             enumerate(value.value),
             key=lambda x: int(RollResult(x[1]))  # type: ignore
         )
-    ][:argument]
+    ][:-argument]
     indexes_to_remove.sort(reverse=True)
 
     for i in indexes_to_remove:

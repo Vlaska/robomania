@@ -29,9 +29,9 @@
     "POLL_CREATE_CREATED_BY_ON": "utworzył",
     "POLL_CREATE_CREATED_BY_ONA": "utworzyła",
     "POLL_CREATE_CREATED_BY_ONO": "utworzyło",
-    "POLL_CREATE_MESSAGE_WITH_PRONOUNS_TEMPLATE": "Użytkownik {user} {created} nową ankietę: \"{question}\"",
+    "POLL_CREATE_MESSAGE_WITH_PRONOUNS_TEMPLATE": "{user} {created} nową ankietę: \"{question}\"",
     "POLL_CREATE_MESSAGE_TEMPLATE": "Ankieta stworzona przez użytkownika {user}: \"{question}\"",
-    "POLL_TOO_MANY_OPTIONS": "Można podać tylko 10 opcji.",
+    "POLL_TOO_MANY_OPTIONS": "Wybrany styl obsługuje tylko {num_of_options} opcji.",
     "POLL_CREATE_NAME": "ankieta",
     "POLL_CREATE_DESCRIPTION": "Utwórz ankietę",
     "POLL_QUESTION_NAME": "pytanie",
@@ -41,5 +41,7 @@
     "POLL_REACTIONS_NAME": "styl",
     "POLL_REACTIONS_DESCRIPTION": "Styl reakcji przypisanych do opcji",
     "POLL_OPTION_NUMBERS": "liczby",
-    "POLL_OPTION_HEARTS": "serca"
+    "POLL_OPTION_HEARTS": "serca",
+    "POLL_OPTION_LIKE": "kciuk",
+    "POLL_OPTION_YES_NO": "tak nie"
 }

@@ -61,8 +61,8 @@ emotes = {
         '🔟'
     ],
     'hearts': [
-        '❤️',
         '💚',
+        '❤️',
         '💙',
         '🧡',
         '💜',
@@ -72,6 +72,8 @@ emotes = {
         '💛',
         '🫀'
     ],
+    'like': ['👍', '👎'],
+    'yes no': ['✅', '❌'],
 }
 
 
@@ -93,6 +95,14 @@ class Poll(commands.Cog):
             OptionChoice(
                 Localised('hearts', key='POLL_OPTION_HEARTS'),
                 'hearts'
+            ),
+            OptionChoice(
+                Localised('like', key='POLL_OPTION_LIKE'),
+                'like'
+            ),
+            OptionChoice(
+                Localised('yes no', key='POLL_OPTION_YES_NO'),
+                'yes no'
             ),
         ])
     ):
@@ -121,10 +131,15 @@ class Poll(commands.Cog):
         selected_theme = emotes[theme]
         separated_options = options.split('|')
         with self.bot.localize(inter.guild_locale or inter.locale) as tr:
-            if len(separated_options) > 10:
-                logger.info('Failed to create poll, too many options')
+            if len(separated_options) > len(selected_theme):
+                logger.info(
+                    'Failed to create poll with selected theme, '
+                    'too many options'
+                )
                 await inter.send(
-                    tr('POLL_TOO_MANY_OPTIONS'),
+                    tr('POLL_TOO_MANY_OPTIONS').format(
+                        num_of_options=len(selected_theme)
+                    ),
                     ephemeral=True
                 )
                 return
