@@ -22,8 +22,8 @@ class ModEnum(str, enum.Enum):
     EXPLODE = ('!', 0, mod_explode)
     KEEP_HIGH = ('kh', 10, mod_keep_high)
     DISCARD_LOW = ('dl', 10, mod_drop_low)
-    REPEAT = ('@', 20, mod_repeat)
-    SUM = ('s', 20, mod_sum)
+    REPEAT = ('@', 10, mod_repeat)
+    SUM = ('s', 10, mod_sum)
 
     def __new__(
         cls,
