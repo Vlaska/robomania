@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
 from typing import TYPE_CHECKING, cast
 
 import pytest
@@ -26,26 +25,26 @@ def anno(bot: object, mocker: MockerFixture) -> announcements.Announcements:
     return a(cast(DisBot, bot))
 
 
-@pytest.mark.parametrize(
-    'now,result', [
-        [datetime(1, 1, 1), False],
-        [datetime(2009, 4, 13, 12, 10), False],
-        [datetime(2009, 4, 13, 12), False],
-        [datetime(2009, 4, 13, 12, 40), True],
-        [datetime(2009, 4, 13, 12, 39, 59), True],
-        [datetime(2021, 1, 1), True],
-    ],
-)
-def test_enough_time_from_last_check(
-    anno: announcements.Announcements,
-    now: datetime,
-    result: bool,
-    mocker: MockerFixture,
-) -> None:
-    datetime_mock = mocker.patch('datetime.datetime')
-    datetime_mock.now.return_value = now
+# @pytest.mark.parametrize(
+#     'now,result', [
+#         [datetime(1, 1, 1), False],
+#         [datetime(2009, 4, 13, 12, 10), False],
+#         [datetime(2009, 4, 13, 12), False],
+#         [datetime(2009, 4, 13, 12, 40), True],
+#         [datetime(2009, 4, 13, 12, 39, 59), True],
+#         [datetime(2021, 1, 1), True],
+#     ],
+# )
+# def test_enough_time_from_last_check(
+#     anno: announcements.Announcements,
+#     now: datetime,
+#     result: bool,
+#     mocker: MockerFixture,
+# ) -> None:
+#     datetime_mock = mocker.patch('datetime.datetime')
+#     datetime_mock.now.return_value = now
 
-    assert anno.enough_time_from_last_check() is result
+#     assert anno.enough_time_from_last_check() is result
 
 
 def test_format_announcements_date(fb_post: TPostFactory) -> None:

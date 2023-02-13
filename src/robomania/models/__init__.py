@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 from robomania.bot import Robomania
-from robomania.models.facebook_post import FacebookPost
 from robomania.models.model import CollectionSetup
 from robomania.models.picrew_model import PicrewModel
 
 models = [
-    FacebookPost,
     PicrewModel,
 ]
 
