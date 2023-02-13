@@ -115,6 +115,7 @@ class Settings(BasicSettings):
 
     announcements_target_channel: int
     picrew_target_channel: int
+    scraping_service_url: str
 
     class Config:
         env_file = '.env'

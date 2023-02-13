@@ -5,7 +5,8 @@ from typing import Iterable
 
 import disnake
 
-from robomania.models.facebook_post import FacebookPost
+from robomania import config
+from robomania.models.facebook_post import FacebookPostScraped
 from robomania.types.post import Post
 
 logger = logging.getLogger('robomania.types')
@@ -14,13 +15,13 @@ logger = logging.getLogger('robomania.types')
 class AnnouncementPost(Post[str]):
     def __init__(
         self,
-        post: FacebookPost,
+        post: FacebookPostScraped,
         images: Iterable[str] = None
     ) -> None:
         self.timestamp = post.timestamp
-        self.url = post.post_url
+        self.url = post.url
 
-        super().__init__(post.post_text, images)
+        super().__init__(post.text, images)
 
     def process_text(self, text: str) -> str:
         return self.format_text(super().process_text(text))
@@ -40,8 +41,12 @@ class AnnouncementPost(Post[str]):
         return f'\nOryginał: {self.url}'
 
     @classmethod
-    def new(cls, post: FacebookPost) -> AnnouncementPost:
-        return cls(post, post.images)
+    def new(cls, post: FacebookPostScraped) -> AnnouncementPost:
+        images = [
+            f'{config.settings.scraping_service_url}posts/image/{i}'
+            for i in post.images
+        ]
+        return cls(post, images)
 
     async def send(self, target: disnake.TextChannel, **kwargs) -> None:
         await super().send(target, suppress_embeds=True, **kwargs)
