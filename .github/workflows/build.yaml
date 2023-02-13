@@ -33,3 +33,5 @@ jobs:
           push: true
           tags: vlaska/robomania:latest
           platforms: linux/arm64,linux/amd64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
