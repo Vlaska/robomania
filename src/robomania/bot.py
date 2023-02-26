@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+from contextvars import ContextVar
 from importlib import resources
 from pathlib import Path
 from typing import Generator, Protocol, cast
@@ -21,6 +22,11 @@ from robomania.utils.healthcheck import HealthcheckClient
 intents = disnake.Intents.default()
 intents.typing = False
 intents.message_content = True
+
+_current_locale = ContextVar(
+    "_current_locale",
+    default=disnake.enums.Locale.en_GB,
+)
 
 
 class Translator(Protocol):
@@ -88,12 +94,17 @@ class Robomania(commands.Bot):
         except AttributeError:
             raise NoInstanceError("No bot instance was created.")
 
+    @classmethod
     def tr(
         self, key: str, locale: disnake.enums.Locale, default: str | None = None
     ) -> str:
+        bot = cls.get_bot()
+        if locale is None:
+            locale = _current_locale.get()
+
         logger.debug(f'Get translation: {{"{locale}": "{key}"}}')
         try:
-            translations = self.i18n.get(key)
+            translations = bot.i18n.get(key)
             assert translations
             value = translations.get(locale.value, None)
         except (disnake.LocalizationKeyError, AttributeError):
@@ -111,14 +122,16 @@ class Robomania(commands.Bot):
 
         return value
 
+    @classmethod
     @contextlib.contextmanager
     def localize(
-        self, locale: disnake.enums.Locale
+        cls, locale: disnake.enums.Locale
     ) -> Generator[Translator, None, None]:
-        def tr(key: str, default: str | None = None) -> str:
-            return self.tr(key, locale, default)
-
-        yield tr
+        token = _current_locale.set(locale)
+        try:
+            yield cls.tr
+        finally:
+            _current_locale.reset(token)
 
 
 bot = Robomania(

@@ -6,7 +6,7 @@ from typing import cast
 
 import disnake
 import validators
-from disnake import AllowedMentions
+from disnake import AllowedMentions, Locale
 from disnake.ext import commands, tasks
 from disnake.interactions.application_command import ApplicationCommandInteraction
 
@@ -30,14 +30,18 @@ class PicrewPost:
         if self.picrew_info.user:
             user_mention = self.picrew_info.user.mention
         else:
-            user_mention = "*nieznany*"
+            user_mention = Robomania.tr(
+                'PICREW_ADDED_BY_UNKNOWN', "*nieznany*"
+            )
 
         tw = ""
         if info.tw:
             tw = f"TW: {info.tw}\n"
 
         post_text = (
-            f"{self.picrew_info.link}\n{tw}" f"Post link dodany przez: {user_mention}"
+            f'{self.picrew_info.link}\n{tw}'
+            f'{Robomania.tr("PICREW_POST_ADDED_BY", "Post added by")}: '
+            f'{user_mention}'
         )
 
         self.post = Post(post_text)
@@ -85,20 +89,30 @@ class Picrew(commands.Cog):
         tw : :class:`str`
             Trigger warning {{ ADD_PICREW_TW }}
         """
-        if not validators.url(url) or "picrew.me" not in url:
-            await inter.send("Nieprawidłowy link.")
-            return
+        locale = inter.locale
+        with Robomania.localize(locale):
+            if not validators.url(url) or 'picrew.me' not in url:
+                await inter.send(
+                    Robomania.tr('PICREW_INCORRECT_LINK', 'Incorrect url.')
+                )
+                return
 
-        await inter.response.defer()
+            await inter.response.defer()
 
-        picrew = PicrewModel(inter.user, url, inter.created_at, False, tw=tw)
+            picrew = PicrewModel(
+                inter.user, url, inter.created_at, False, tw=tw)
 
-        try:
-            await picrew.save(self.bot.get_db("robomania"))
-        except DuplicateError:
-            await inter.send("Link został już dodany 😥.")
-        else:
-            await inter.send("Dodano 😊")
+            try:
+                await picrew.save(self.bot.get_db('robomania'))
+            except DuplicateError:
+                await inter.send(Robomania.tr(
+                    'PICREW_LINK_ALREADY_ADDED',
+                    'Link was already added 😥.'
+                ))
+            else:
+                await inter.send(Robomania.tr(
+                    'PICREW_LINK_ADDED', 'Added 😊'
+                ))
 
     @picrew.sub_command()
     async def status(
@@ -115,13 +129,20 @@ class Picrew(commands.Cog):
         """
         await inter.response.defer()
 
-        db = self.bot.get_db("robomania")
-        count = await PicrewModel.count_posted_and_not_posted(db)
+        with Robomania.localize(inter.locale):
+            db = self.bot.get_db("robomania")
+            count = await PicrewModel.count_posted_and_not_posted(db)
 
-        await inter.followup.send(
-            f"Obecnie {count.not_posted} linków czeka na wysłanie. "
-            f"Do tej pory zostało wysłanych {count.posted} linków."
-        )
+            await inter.followup.send(
+                Robomania.tr(
+                    'PICREW_STATS',
+                    'There are {links_waiting} links still waiting to be sent.'
+                    ' At this time {links_sent} links were sent.'
+                ).format(
+                    links_waiting=count.not_posted,
+                    links_sent=count.posted,
+                )
+            )
 
     @picrew.sub_command()
     async def post(self, inter: ApplicationCommandInteraction) -> None:
@@ -136,32 +157,38 @@ class Picrew(commands.Cog):
 
         await inter.response.defer()
 
-        posts = await PicrewModel.get_random(db, 1)
-        if not posts:
-            await inter.followup.send("Brak linków do wysłania.")
-            return
+        with Robomania.localize(inter.locale):
+            posts = await PicrewModel.get_random(db, 1)
+            if not posts:
+                await inter.followup.send(
+                    Robomania.tr(
+                        'PICREW_NO_LINKS_TO_SEND', 'No links to send.'
+                    )
+                )
+                return
 
-        post = PicrewPost(posts[0])
-        await post.respond(inter)
+            post = PicrewPost(posts[0])
+            await post.respond(inter)
 
     @tasks.loop(time=datetime.time(hour=15))
     async def automatic_post(self) -> None:
         logger.info("Posting new picrew link.")
         db = self.bot.get_db("robomania")
 
-        posts = await PicrewModel.get_random_unposted(db, 1)
-        if not posts:
-            logger.info("No unposted picrew links.")
-            return
+        with self.bot.localize(Locale.pl):
+            posts = await PicrewModel.get_random_unposted(db, 1)
+            if not posts:
+                logger.info("No unposted picrew links.")
+                return
 
-        tmp = posts[0]
+            tmp = posts[0]
 
         logger.info(f"Sending picrew link {tmp.link}")
 
-        post = PicrewPost(tmp)
-        await post.send(self.target_channel)
+            post = PicrewPost(tmp)
+            await post.send(self.target_channel)
 
-        await tmp.set_to_posted(db)
+            await tmp.set_to_posted(db)
 
     @automatic_post.before_loop
     async def init(self) -> None:
