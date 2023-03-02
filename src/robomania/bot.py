@@ -18,6 +18,7 @@ from pymongo.database import Database
 from robomania.config import Settings, settings
 from robomania.locale import DefaultLocale
 from robomania.utils.exceptions import NoInstanceError
+from robomania.utils.healthcheck import HealthcheckClient
 
 intents = disnake.Intents.default()
 intents.typing = False
@@ -66,7 +67,12 @@ class Robomania(commands.Bot):
         if settings.debug:
             self.loop.set_debug(True)
 
+        self.healthcheck_client = await HealthcheckClient.start(self)
         await super().start(*args, **kwargs)
+
+    async def close(self) -> None:
+        await self.healthcheck_client.shutdown()
+        await super().close()
 
     def get_db(self, name: str) -> Database:
         if settings.debug:
@@ -134,17 +140,22 @@ def init_logger(logger: logging.Logger, out_file: str) -> None:
     log_folder = settings.log_folder
     log_folder.mkdir(parents=True, exist_ok=True)
 
-    handler = logging.FileHandler(
+    formatter = logging.Formatter(
+        '%(asctime)s:%(levelname)s:%(name)s: %(message)s'
+    )
+
+    file_handler = logging.FileHandler(
         log_folder / out_file,
         encoding='utf-8',
         mode='a'
     )
-    handler.setFormatter(
-        logging.Formatter(
-            '%(asctime)s:%(levelname)s:%(name)s: %(message)s'
-        )
-    )
-    logger.addHandler(handler)
+    file_handler.setFormatter(formatter)
+
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+
+    logger.addHandler(file_handler)
+    logger.addHandler(stream_handler)
 
 
 @bot.event
