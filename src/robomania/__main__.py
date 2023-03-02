@@ -1,30 +1,16 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import click
+import requests
 
 from robomania.bot import configure_bot, main
 
 
 @click.group(invoke_without_command=True)
-@click.option(
-    '-c',
-    '--config',
-    default='.env',
-    help='Path to .env file storing configuration',
-    type=click.Path(
-        exists=True,
-        dir_okay=False,
-        writable=False,
-        readable=True,
-        allow_dash=False,
-        path_type=Path
-    )
-)
 @click.pass_context
-def cli(ctx: click.Context, config: Path) -> None:
-    configure_bot(config)
+def cli(ctx: click.Context) -> None:
+    if ctx.invoked_subcommand != 'healthcheck':
+        configure_bot()
     if ctx.invoked_subcommand is None:
         ctx.invoke(run)
 
@@ -34,6 +20,19 @@ def setup_database() -> None:
     from robomania.models import create_collections
 
     create_collections()
+
+
+@cli.command()
+def healthcheck() -> int:
+    try:
+        response = requests.get('http://localhost:6302/healthcheck')
+    except Exception as e:
+        print(e)
+        return 1
+
+    if response.status_code == 201:
+        return 0
+    return 1
 
 
 @cli.command()
