@@ -11,30 +11,24 @@ if TYPE_CHECKING:
 def mod_repeat(expression: DiceExpression, argument: int | None) -> RollResult:
     if argument is None or argument <= 0:
         raise ValueError(
-            'Repeat requires positive argument.',
-            'DICE_REPEAT_ARGUMENT',
+            "Repeat requires positive argument.",
+            "DICE_REPEAT_ARGUMENT",
         )
 
     return RollResult([expression.eval() for _ in range(argument)])
 
 
-def mod_explode(
-    expression: DiceExpression,
-    argument: int | None
-) -> RollResult:
-    dice = cast('Dice', expression)
+def mod_explode(expression: DiceExpression, argument: int | None) -> RollResult:
+    dice = cast("Dice", expression)
     try:
         num_of_explosions = dice.num_of_dice
     except AttributeError:
         try:
-            if dice.mod.value == '!':  # type: ignore
+            if dice.mod.value == "!":  # type: ignore
                 return dice.eval()
         except AttributeError:
             pass
-        raise ValueError(
-            'Cannot explode a group.',
-            'DICE_EXPLOSION_DICE_ONLY'
-        )
+        raise ValueError("Cannot explode a group.", "DICE_EXPLOSION_DICE_ONLY")
 
     out: RollResult[list[int]] = RollResult([])
 
@@ -48,23 +42,14 @@ def mod_explode(
     return out
 
 
-def mod_sum(
-    expression: DiceExpression,
-    argument: int | None
-) -> RollResult:
+def mod_sum(expression: DiceExpression, argument: int | None) -> RollResult:
     value = expression.eval()
     return value.sum()
 
 
-def mod_drop_low(
-    expression: DiceExpression,
-    argument: int | None
-) -> RollResult:
+def mod_drop_low(expression: DiceExpression, argument: int | None) -> RollResult:
     if argument is None or argument <= 0:
-        raise ValueError(
-            'Drop low required positive argument.',
-            'DICE_DROP_LOW_ARGUMENT'
-        )
+        raise ValueError("Drop low required positive argument.", "DICE_DROP_LOW_ARGUMENT")
 
     value: RollResult[int | list[int | list]] = expression.eval()
 
@@ -75,13 +60,7 @@ def mod_drop_low(
         return RollResult(0)
 
     indexes_to_remove = [
-        i[0]
-        for i
-        in sorted(
-            enumerate(value.value),
-            key=lambda x: int(RollResult(x[1])),  # type: ignore
-            reverse=False
-        )
+        i[0] for i in sorted(enumerate(value.value), key=lambda x: int(RollResult(x[1])), reverse=False)  # type: ignore
     ][:argument]
     indexes_to_remove.sort(reverse=True)
 
@@ -91,15 +70,9 @@ def mod_drop_low(
     return value
 
 
-def mod_keep_high(
-    expression: DiceExpression,
-    argument: int | None
-) -> RollResult:
+def mod_keep_high(expression: DiceExpression, argument: int | None) -> RollResult:
     if argument is None or argument <= 0:
-        raise ValueError(
-            'Keep high required positive argument.',
-            'DICE_KEEP_HIGH_ARGUMENT'
-        )
+        raise ValueError("Keep high required positive argument.", "DICE_KEEP_HIGH_ARGUMENT")
 
     value: RollResult[int | list[int | list]] = expression.eval()
 
@@ -107,12 +80,7 @@ def mod_keep_high(
         return value
 
     indexes_to_remove = [
-        i[0]
-        for i
-        in sorted(
-            enumerate(value.value),
-            key=lambda x: int(RollResult(x[1]))  # type: ignore
-        )
+        i[0] for i in sorted(enumerate(value.value), key=lambda x: int(RollResult(x[1])))  # type: ignore
     ][:-argument]
     indexes_to_remove.sort(reverse=True)
 

@@ -11,25 +11,19 @@ from pydantic import BaseSettings, Extra, Field, MongoDsn, SecretStr, validator
 
 
 class Config:
-    token: Annotated[str, 'DISCORD_TOKEN']
-    db_username: Annotated[str, 'DB_USERNAME']
-    db_password: Annotated[str, 'DB_PASSWORD']
-    db_auth_db: Annotated[str, 'DB_AUTH_DB', '']
-    db_host: Annotated[str, 'DB_HOST']
-    db_port: Annotated[int, 'DB_PORT', 0]
-    announcements_target_channel: Annotated[
-        int,
-        'ANNOUNCEMENTS_TARGET_CHANNEL'
-    ]
-    picrew_target_channel: Annotated[
-        int,
-        'PICREW_TARGET_CHANNEL'
-    ]
-    scraper_user_agent: Annotated[str, 'FACEBOOK_SCRAPER_USER_AGENT']
-    facebook_cookies_path: Annotated[str, 'FACEBOOK_COOKIES_PATH']
-    log_folder: Annotated[Path, 'LOG_FOLDER', Path('.')]
+    token: Annotated[str, "DISCORD_TOKEN"]
+    db_username: Annotated[str, "DB_USERNAME"]
+    db_password: Annotated[str, "DB_PASSWORD"]
+    db_auth_db: Annotated[str, "DB_AUTH_DB", ""]
+    db_host: Annotated[str, "DB_HOST"]
+    db_port: Annotated[int, "DB_PORT", 0]
+    announcements_target_channel: Annotated[int, "ANNOUNCEMENTS_TARGET_CHANNEL"]
+    picrew_target_channel: Annotated[int, "PICREW_TARGET_CHANNEL"]
+    scraper_user_agent: Annotated[str, "FACEBOOK_SCRAPER_USER_AGENT"]
+    facebook_cookies_path: Annotated[str, "FACEBOOK_COOKIES_PATH"]
+    log_folder: Annotated[Path, "LOG_FOLDER", Path(".")]
 
-    debug: Annotated[bool, 'DEBUG', False]
+    debug: Annotated[bool, "DEBUG", False]
 
     @classmethod
     def load_env(cls, path: str | Path, stream: StringIO = None) -> None:
@@ -56,7 +50,7 @@ class Config:
                     value = rest[0]
             elif _type is bool:
                 if isinstance(value, str):
-                    value = value.lower() in {'1', 'true', 'yes'}
+                    value = value.lower() in {"1", "true", "yes"}
             else:
                 value = _type(value)
 
@@ -72,32 +66,28 @@ class Settings(BasicSettings):
 
     db_username: str
     db_password: SecretStr
-    db_auth_db: str = ''
+    db_auth_db: str = ""
     db_host: str
     db_port: str | None = None
 
     db_url: MongoDsn | None = None
 
-    @validator('db_url')
-    def validate_url(
-        cls,  # noqa: N805
-        v: str | None,
-        values: dict[str, Any]
-    ) -> MongoDsn:
+    @validator("db_url")
+    def validate_url(cls, v: str | None, values: dict[str, Any]) -> MongoDsn:  # noqa: N805
         if isinstance(v, MongoDsn):
             return v
 
-        username = values['db_username']
-        password: SecretStr = values['db_password']
+        username = values["db_username"]
+        password: SecretStr = values["db_password"]
 
-        host = values['db_host']
-        port = values['db_port']
+        host = values["db_host"]
+        port = values["db_port"]
         auth_db = f"/{values['db_auth_db']}"
 
         if port:
-            protocol = 'mongodb'
+            protocol = "mongodb"
         else:
-            protocol = 'mongodb+srv'
+            protocol = "mongodb+srv"
 
         return MongoDsn.build(
             scheme=protocol,
@@ -106,7 +96,7 @@ class Settings(BasicSettings):
             host=host,
             port=port,
             path=auth_db,
-            query='retryWrites=true&w=majority'
+            query="retryWrites=true&w=majority",
         )
 
     scraper_user_agent: str | None = None
@@ -118,13 +108,13 @@ class Settings(BasicSettings):
     scraping_service_url: str
 
     class Config:
-        env_file = '.env'
-        env_file_encoding = 'utf-8'
+        env_file = ".env"
+        env_file_encoding = "utf-8"
 
 
 settings: Settings
 
-if 'pytest' in sys.modules:
+if "pytest" in sys.modules:
     settings = BasicSettings()  # type: ignore
 else:
     settings = Settings()

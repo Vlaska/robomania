@@ -4,6 +4,6 @@ import numpy as np
 import pytest
 
 
-@pytest.fixture(scope='function', autouse=True)
+@pytest.fixture(autouse=True)
 def set_seed() -> None:
     np.random.seed(0)

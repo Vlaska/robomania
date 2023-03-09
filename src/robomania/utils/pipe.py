@@ -29,8 +29,4 @@ class Pipe:
         return out
 
     def __call__(self, x: Any) -> Any:
-        return reduce(
-            lambda v, func: func(v),
-            self.pipeline,
-            x
-        )
+        return reduce(lambda v, func: func(v), self.pipeline, x)

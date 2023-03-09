@@ -10,17 +10,13 @@ from aiohttp import web
 from aiohttp.web_request import Request
 from disnake.ext.commands import Bot  # type: ignore[attr-defined]
 
-logger = logging.getLogger('robomania.healthcheck')
+logger = logging.getLogger("robomania.healthcheck")
 
 
 class HealthcheckClient:
     runner: web.AppRunner
 
-    def __init__(
-            self,
-            bot: Bot,
-            app: web.Application,
-            max_latency: float = 20) -> None:
+    def __init__(self, bot: Bot, app: web.Application, max_latency: float = 20) -> None:
         self.bot = bot
         self.max_latency = max_latency
         self.app = app
@@ -32,22 +28,17 @@ class HealthcheckClient:
             or not self.bot.is_ready()
             or self.bot.is_closed()
         ):
-            message = 'not ok'
+            message = "not ok"
             status = 530
         else:
-            message = 'ok'
+            message = "ok"
             status = 201
 
-        body = json.dumps({'status': message})
-        return web.Response(
-            body=body,
-            status=status,
-            content_type='application/json',
-            charset='utf-8'
-        )
+        body = json.dumps({"status": message})
+        return web.Response(body=body, status=status, content_type="application/json", charset="utf-8")
 
     async def shutdown(self) -> None:
-        logger.info('Shutting down healthcheck server')
+        logger.info("Shutting down healthcheck server")
         await self.runner.shutdown()
         await self.runner.cleanup()
 
@@ -55,16 +46,18 @@ class HealthcheckClient:
     async def start(cls, bot: Bot, max_latency: float = 20) -> Self:
         app = web.Application(loop=bot.loop)
         client = HealthcheckClient(bot, app, max_latency)
-        app.add_routes([
-            web.get('/healthcheck', client.healthcheck),
-        ])
+        app.add_routes(
+            [
+                web.get("/healthcheck", client.healthcheck),
+            ]
+        )
         # web.run_app(app, host='localhost', port=6302)
         runner = web.AppRunner(app)
         await runner.setup()
         client.runner = runner
-        site = web.TCPSite(runner, '0.0.0.0', 6302)
+        site = web.TCPSite(runner, "0.0.0.0", 6302)
         await site.start()
 
-        logger.info('Started healthcheck server')
+        logger.info("Started healthcheck server")
 
         return client

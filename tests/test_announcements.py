@@ -15,11 +15,11 @@ if TYPE_CHECKING:
     from .conftest import TPostFactory, TRawPostFactory
 
 
-@pytest.fixture
+@pytest.fixture()
 def anno(bot: object, mocker: MockerFixture) -> announcements.Announcements:
     a = announcements.Announcements
-    mocker.patch.object(a.check_for_announcements, 'start')
-    mocker.patch.object(a.check_for_announcements, '_before_loop')
+    mocker.patch.object(a.check_for_announcements, "start")
+    mocker.patch.object(a.check_for_announcements, "_before_loop")
     a._DISABLE_ANNOUNCEMENTS_LOOP = True
 
     return a(cast(DisBot, bot))
@@ -50,12 +50,10 @@ def anno(bot: object, mocker: MockerFixture) -> announcements.Announcements:
 def test_format_announcements_date(fb_post: TPostFactory) -> None:
     t = announcement_post.AnnouncementPost(fb_post)
 
-    assert f'<t:{fb_post.timestamp}:F>' in t.announcements_date
+    assert f"<t:{fb_post.timestamp}:F>" in t.announcements_date
 
 
-def test_format_announcement_text(
-    fb_post: TPostFactory
-) -> None:
+def test_format_announcement_text(fb_post: TPostFactory) -> None:
     anno = announcement_post.AnnouncementPost(fb_post, None)
 
     formatted_text = anno.format_text(fb_post.post_text)
@@ -63,31 +61,20 @@ def test_format_announcement_text(
     assert all(len(i) <= 2000 for i in formatted_text)
 
 
-@pytest.mark.parametrize('with_content,is_event', [
+@pytest.mark.parametrize(
+    ("with_content", "is_event"),
     [
+        [[{"name": "event", "link": "/events/542918700556684?locale2=en_US&__tn__=C-R"}], True],
         [
-            {'name': 'event',
-             'link': '/events/542918700556684?locale2=en_US&__tn__=C-R'}
+            [
+                {"name": "Prideshop.pl", "link": "/prideshoppl/?locale2=en_US&__tn__=CH-R"},
+                {"name": "event", "link": "/events/542918700556684?locale2=en_US&__tn__=C-R"},
+            ],
+            True,
         ],
-        True
+        [[{"name": "Prideshop.pl", "link": "/prideshoppl/?locale2=en_US&__tn__=CH-R"}], False],
     ],
-    [
-        [
-            {'name': 'Prideshop.pl',
-             'link': '/prideshoppl/?locale2=en_US&__tn__=CH-R'},
-            {'name': 'event',
-                'link': '/events/542918700556684?locale2=en_US&__tn__=C-R'}
-        ],
-        True
-    ],
-    [
-        [
-            {'name': 'Prideshop.pl',
-             'link': '/prideshoppl/?locale2=en_US&__tn__=CH-R'}
-        ],
-        False
-    ]
-])
+)
 def test_post_contains_event(
     raw_post_factory: TRawPostFactory,
     faker: Faker,
@@ -96,6 +83,6 @@ def test_post_contains_event(
 ) -> None:
     post = raw_post_factory(faker)
 
-    post['with'] = with_content
+    post["with"] = with_content
 
     assert FacebookPost.from_raw(post).is_event is is_event

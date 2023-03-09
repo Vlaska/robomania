@@ -31,19 +31,19 @@ class Robomania(commands.Bot):
     settings: Settings = settings
     __bot: Robomania
     __blocking_db_counter = 0
-    timezone = pytz.timezone('Europe/Warsaw')
+    timezone = pytz.timezone("Europe/Warsaw")
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.__class__.__bot = self
 
     def setup(self) -> None:
-        locale_path = resources.path('robomania', 'locale')
+        locale_path = resources.path("robomania", "locale")
         self.i18n.load(locale_path)
         self.client = AsyncIOMotorClient(str(settings.db_url))
 
         if settings.debug:
-            logger.warning('Running in DEBUG mode.')
+            logger.warning("Running in DEBUG mode.")
             self.reload = True
             self._sync_commands_debug = True
             self._test_guilds = [958823316850880512]
@@ -76,7 +76,7 @@ class Robomania(commands.Bot):
 
     def get_db(self, name: str) -> Database:
         if settings.debug:
-            name = f'{name}-dev'
+            name = f"{name}-dev"
         return self.client[name]
 
     @classmethod
@@ -84,28 +84,19 @@ class Robomania(commands.Bot):
         try:
             return cls.__bot
         except AttributeError:
-            raise NoInstanceError('No bot instance was created.')
+            raise NoInstanceError("No bot instance was created.")
 
-    def tr(
-        self,
-        key: str,
-        locale: disnake.enums.Locale,
-        default: str | None = None
-    ) -> str:
+    def tr(self, key: str, locale: disnake.enums.Locale, default: str | None = None) -> str:
         logger.debug(f'Get translation: {{"{locale}": "{key}"}}')
         try:
             translations = self.i18n.get(key)
             value = translations.get(locale.value, None)
         except (disnake.LocalizationKeyError, AttributeError):
-            logger.warning(
-                f'Missing localization for key: "{key}"'
-            )
+            logger.warning(f'Missing localization for key: "{key}"')
             value = None
 
         if value is None:
-            logger.warning(
-                f'Missing localization for key: "{key}" for "{locale}" locale'
-            )
+            logger.warning(f'Missing localization for key: "{key}" for "{locale}" locale')
             value = DefaultLocale.get(key)
 
         if value == key and default:
@@ -114,10 +105,7 @@ class Robomania(commands.Bot):
         return value
 
     @contextlib.contextmanager
-    def localize(
-        self,
-        locale: disnake.enums.Locale
-    ) -> Generator[Callable[[str, str | None], str], None, None]:
+    def localize(self, locale: disnake.enums.Locale) -> Generator[Callable[[str, str | None], str], None, None]:
         def tr(key: str, default: str | None = None) -> str:
             return self.tr(key, locale, default)
 
@@ -125,13 +113,13 @@ class Robomania(commands.Bot):
 
 
 bot = Robomania(
-    '>',
+    ">",
     case_insensitive=True,
     intents=intents,
 )
 
 
-logger = logging.getLogger('robomania')
+logger = logging.getLogger("robomania")
 
 
 def init_logger(logger: logging.Logger, out_file: str) -> None:
@@ -140,15 +128,9 @@ def init_logger(logger: logging.Logger, out_file: str) -> None:
     log_folder = settings.log_folder
     log_folder.mkdir(parents=True, exist_ok=True)
 
-    formatter = logging.Formatter(
-        '%(asctime)s:%(levelname)s:%(name)s: %(message)s'
-    )
+    formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s")
 
-    file_handler = logging.FileHandler(
-        log_folder / out_file,
-        encoding='utf-8',
-        mode='a'
-    )
+    file_handler = logging.FileHandler(log_folder / out_file, encoding="utf-8", mode="a")
     file_handler.setFormatter(formatter)
 
     stream_handler = logging.StreamHandler()
@@ -163,25 +145,25 @@ async def on_ready():
     logger.info(f'We have logged in as "{bot.user}"')
 
 
-def configure_bot(config_path: str | Path = '.env') -> None:
-    init_logger(logger, 'robomania.log')
-    init_logger(logging.getLogger('disnake'), 'disnake.log')
+def configure_bot(config_path: str | Path = ".env") -> None:
+    init_logger(logger, "robomania.log")
+    init_logger(logging.getLogger("disnake"), "disnake.log")
 
     bot.setup()
 
-    bot.load_extension('robomania.cogs.announcements')
-    bot.load_extension('robomania.cogs.picrew')
-    bot.load_extension('robomania.cogs.dice')
-    bot.load_extension('robomania.cogs.poll')
+    bot.load_extension("robomania.cogs.announcements")
+    bot.load_extension("robomania.cogs.picrew")
+    bot.load_extension("robomania.cogs.dice")
+    bot.load_extension("robomania.cogs.poll")
 
     if settings.debug:
-        bot.load_extension('robomania.cogs.tester')
+        bot.load_extension("robomania.cogs.tester")
 
 
 def main() -> None:
     bot.run(settings.discord_token.get_secret_value())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     configure_bot()
     main()

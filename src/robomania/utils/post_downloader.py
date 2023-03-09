@@ -13,18 +13,14 @@ from robomania.utils import preconfigure
 FBPost = dict[str, Any]
 FBPosts = list[FBPost]
 
-logger = logging.getLogger('robomania.types')
+logger = logging.getLogger("robomania.types")
 
 
 @preconfigure
 class PostDownloader:
     DONE = object()
 
-    def __init__(
-        self,
-        loop: asyncio.AbstractEventLoop,
-        lazy_posts: Iterator[FBPost]
-    ) -> None:
+    def __init__(self, loop: asyncio.AbstractEventLoop, lazy_posts: Iterator[FBPost]) -> None:
         self._lazy_posts = lazy_posts
         self.loop = loop
 
@@ -32,15 +28,10 @@ class PostDownloader:
         return self
 
     async def __anext__(self) -> FBPost:
-        out: FBPost | object = await self.loop.run_in_executor(
-            None,
-            next,
-            self._lazy_posts,
-            self.DONE
-        )
+        out: FBPost | object = await self.loop.run_in_executor(None, next, self._lazy_posts, self.DONE)
 
         if out is self.DONE:
-            logger.debug('Downloaded all posts')
+            logger.debug("Downloaded all posts")
             raise StopAsyncIteration
 
         logger.debug(f'Downloaded post {out["post_id"]}')  # type: ignore
@@ -53,18 +44,13 @@ class PostDownloader:
         async for i in self:
             out.append(i)
 
-        logger.info(f'Downloaded {len(out)} posts.')
+        logger.info(f"Downloaded {len(out)} posts.")
 
         return out
 
     @classmethod
-    async def new(
-        cls,
-        loop: asyncio.AbstractEventLoop,
-        fanpage: str,
-        pages: int
-    ) -> PostDownloader:
-        logger.debug(f'Download params: {fanpage=}, {pages=}')
+    async def new(cls, loop: asyncio.AbstractEventLoop, fanpage: str, pages: int) -> PostDownloader:
+        logger.debug(f"Download params: {fanpage=}, {pages=}")
         lazy_posts = await loop.run_in_executor(
             None,
             partial(
@@ -72,17 +58,12 @@ class PostDownloader:
                 fanpage,
                 page_limit=pages,
                 cookies=config.settings.facebook_cookies_path,
-            )
+            ),
         )
         return cls(loop, lazy_posts)
 
     @classmethod
-    async def download_posts(
-        cls,
-        fanpage: str,
-        pages: int,
-        loop: asyncio.AbstractEventLoop = None
-    ) -> FBPosts:
+    async def download_posts(cls, fanpage: str, pages: int, loop: asyncio.AbstractEventLoop = None) -> FBPosts:
         if not loop:
             loop = asyncio.get_event_loop()
 
@@ -93,7 +74,8 @@ class PostDownloader:
     @staticmethod
     def preconfigure() -> None:
         from facebook_scraper import _scraper
-        locale = {'Accept-Language': 'en-US,en;q=0.5'}
+
+        locale = {"Accept-Language": "en-US,en;q=0.5"}
         _scraper.session.headers.update(locale)
         _scraper.default_headers.update(locale)
 
