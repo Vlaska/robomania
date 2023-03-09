@@ -12,9 +12,14 @@ services:
       - db:/data/db
     ports:
       - 27017:27017
+    hostname: mongo
     networks:
       - robomania_database
+      - default
 
 networks:
   robomania_database:
     driver: bridge
+  front:
+    name: host
+    external: true
