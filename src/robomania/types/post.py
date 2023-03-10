@@ -28,7 +28,9 @@ class Post(Generic[ImageType]):
     _text: str
     wrapped_text: list[str]
 
-    wrapper = TextWrapper(MAX_CHARACTERS_PER_POST, expand_tabs=False, replace_whitespace=False)
+    wrapper = TextWrapper(
+        MAX_CHARACTERS_PER_POST, expand_tabs=False, replace_whitespace=False
+    )
 
     text_processing_pipeline = (
         Pipe()
@@ -39,11 +41,12 @@ class Post(Generic[ImageType]):
         | disnake.utils.escape_markdown
     )
 
-    def __init__(self, text: str, images: Iterable[ImageType] = None) -> None:
+    def __init__(self, text: str, images: Iterable[ImageType] | None = None) -> None:
         self.text = text
+        self._images = []
 
         if images:
-            self._images = list(images)
+            self._images.extend(images)
 
     def process_text(self, text: str) -> str:
         return self.text_processing_pipeline(text)
@@ -66,8 +69,8 @@ class Post(Generic[ImageType]):
     @staticmethod
     async def _send(
         channel: disnake.TextChannel,
-        text: str = None,
-        images: list[disnake.File] = None,
+        text: str | None = None,
+        images: list[disnake.File] | None = None,
         /,
         kwargs: dict[str, Any] = {},
     ) -> None:
@@ -82,7 +85,9 @@ class Post(Generic[ImageType]):
 
     async def _prepare_images(
         self,
-    ) -> tuple[list[disnake.File] | None, Generator[list[disnake.File], None, None] | None]:
+    ) -> tuple[
+        list[disnake.File] | None, Generator[list[disnake.File], None, None] | None
+    ]:
         if self._images:
             images = await self._get_images(self._images)
             images_to_send = Image.prepare_images(images)

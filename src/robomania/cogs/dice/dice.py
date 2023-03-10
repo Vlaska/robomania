@@ -22,7 +22,7 @@ class ModEnum(str, enum.Enum):
     priority: int
     # `Any` shouldn't be as first argument, but mypy thinks it's a method,
     # and complains about number of arguments
-    func: Callable[[Any, "DiceExpression", int | None], RollResult]
+    func: Callable[["DiceExpression", int | None], RollResult]
 
     EXPLODE = ("!", 0, mod_explode)
     KEEP_HIGH = ("kh", 10, mod_keep_high)
@@ -30,7 +30,12 @@ class ModEnum(str, enum.Enum):
     REPEAT = ("@", 10, mod_repeat)
     SUM = ("s", 10, mod_sum)
 
-    def __new__(cls, value: str, priority: int, func: Callable[["DiceExpression", int | None], RollResult]) -> ModEnum:
+    def __new__(
+        cls,
+        value: str,
+        priority: int,
+        func: Callable[["DiceExpression", int | None], RollResult],
+    ) -> ModEnum:
         obj = str.__new__(cls, [value])
         obj._value_ = value
         obj.priority = priority
@@ -44,7 +49,7 @@ class ModEnum(str, enum.Enum):
 class OperatorEnum(str, enum.Enum):
     # Should be only two `Any`, but mypy thinks it's a method, and complains
     # about number of arguments
-    func: Callable[[Any, Any, Any], Any]
+    func: Callable[[Any, Any], Any]
 
     PLUS = ("+", operator.add)
     MINUS = ("-", operator.sub)

@@ -80,15 +80,21 @@ class RollResult(Generic[T]):
         return out
 
     @overload
-    def __add__(self: RollResult[list], other: int | RollResult[int]) -> RollResult[int]:
+    def __add__(
+        self: RollResult[list], other: int | RollResult[int]
+    ) -> RollResult[int]:
         pass
 
     @overload
-    def __add__(self: RollResult[list], other: list | RollResult[list]) -> RollResult[list]:
+    def __add__(
+        self: RollResult[list], other: list | RollResult[list]
+    ) -> RollResult[list]:
         pass
 
     @overload
-    def __add__(self: RollResult[int], other: int | list | RollResult[int]) -> RollResult[int]:
+    def __add__(
+        self: RollResult[int], other: int | list | RollResult[int]
+    ) -> RollResult[int]:
         pass
 
     def __add__(self, other: object):
@@ -105,7 +111,10 @@ class RollResult(Generic[T]):
             case list() | RollResult(list()):
                 out = cast(RollResult[list], self).__concat(other)
             case _:
-                raise ValueError(f'+ opperator not supported: "{other!r}"' "DICE_INCORRECT_EXPRESSION")
+                raise ValueError(
+                    f'+ opperator not supported: "{other!r}"'
+                    "DICE_INCORRECT_EXPRESSION"
+                )
 
         return RollResult(out)
 
@@ -125,11 +134,14 @@ class RollResult(Generic[T]):
         if isinstance(other, (int, list)):
             return RollResult(other) + self
 
-        raise ValueError(f'+ operator not supported: "{other}"', "DICE_INCORRECT_EXPRESSION")
+        raise ValueError(
+            f'+ operator not supported: "{other}"', "DICE_INCORRECT_EXPRESSION"
+        )
 
     @staticmethod
     def __transform_other_to_int(
-        other: int | list | RollResult[int | list], exception_message: str = "Cannot transform to int"
+        other: int | list | RollResult[int | list],
+        exception_message: str = "Cannot transform to int",
     ) -> int:
         match other:
             case int():
@@ -139,7 +151,9 @@ class RollResult(Generic[T]):
             case RollResult():
                 out = other.__sum()
             case _:
-                raise ValueError(f'{exception_message}: "{other!r}"', "DICE_INCORRECT_EXPRESSION")
+                raise ValueError(
+                    f'{exception_message}: "{other!r}"', "DICE_INCORRECT_EXPRESSION"
+                )
 
         return out
 
@@ -160,15 +174,25 @@ class RollResult(Generic[T]):
     def __rmul__(self, other: int | list) -> RollResult[int]:
         return self * other
 
-    def __truediv__(self, other: int | list | RollResult[int | list]) -> RollResult[int]:
+    def __truediv__(
+        self, other: int | list | RollResult[int | list]
+    ) -> RollResult[int]:
         out = self.__transform_other_to_int(other)
         self_value = self.__sum()
         if out == 0:
-            if isinstance(other, int) or (isinstance(other, RollResult) and isinstance(other.value, int)):
+            if isinstance(other, int) or (
+                isinstance(other, RollResult) and isinstance(other.value, int)
+            ):
                 raise ZeroDivisionError("Cannot divide by 0")
             else:
-                warnings.warn("Roll result or list evaluated to 0 during division", DivByZeroWarning)
-                logger.warning("Roll result or list evaluated to 0 during division, " "aborting division.")
+                warnings.warn(
+                    "Roll result or list evaluated to 0 during division",
+                    DivByZeroWarning,
+                )
+                logger.warning(
+                    "Roll result or list evaluated to 0 during division, "
+                    "aborting division."
+                )
                 out = 1
 
         return RollResult(self_value // out)
@@ -180,8 +204,14 @@ class RollResult(Generic[T]):
             if isinstance(self.value, int):
                 raise ZeroDivisionError("Cannot divide by 0")
             else:
-                warnings.warn("Roll result or list evaluated to 0 during division", DivByZeroWarning)
-                logger.warning("Roll result or list evaluated to 0 during division, " "aborting division.")
+                warnings.warn(
+                    "Roll result or list evaluated to 0 during division",
+                    DivByZeroWarning,
+                )
+                logger.warning(
+                    "Roll result or list evaluated to 0 during division, "
+                    "aborting division."
+                )
                 self_value = 1
 
         return RollResult(out // self_value)

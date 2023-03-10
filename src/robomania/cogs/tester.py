@@ -1,8 +1,11 @@
-# type: ignore[attr-defined]
 from __future__ import annotations
 
-from disnake import ApplicationCommandInteraction, Embed
+from typing import cast
+
+from disnake import Embed
 from disnake.ext import commands
+from disnake.guild import GuildMessageable
+from disnake.interactions.application_command import ApplicationCommandInteraction
 
 from robomania.bot import Robomania
 
@@ -32,7 +35,9 @@ class Tester(commands.Cog):
     @commands.is_owner()
     async def purge(self, inter: ApplicationCommandInteraction, messages: int):
         await inter.response.defer()
-        deleted = await inter.channel.purge(limit=messages, before=inter.created_at)
+        deleted = await cast(GuildMessageable, inter.channel).purge(
+            limit=messages, before=inter.created_at
+        )
         await inter.followup.send(f"Deleted {len(deleted)} messages.", delete_after=5)
 
     @commands.slash_command()

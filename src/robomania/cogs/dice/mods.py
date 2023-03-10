@@ -49,7 +49,9 @@ def mod_sum(expression: DiceExpression, argument: int | None) -> RollResult:
 
 def mod_drop_low(expression: DiceExpression, argument: int | None) -> RollResult:
     if argument is None or argument <= 0:
-        raise ValueError("Drop low required positive argument.", "DICE_DROP_LOW_ARGUMENT")
+        raise ValueError(
+            "Drop low required positive argument.", "DICE_DROP_LOW_ARGUMENT"
+        )
 
     value: RollResult[int | list[int | list]] = expression.eval()
 
@@ -60,7 +62,12 @@ def mod_drop_low(expression: DiceExpression, argument: int | None) -> RollResult
         return RollResult(0)
 
     indexes_to_remove = [
-        i[0] for i in sorted(enumerate(value.value), key=lambda x: int(RollResult(x[1])), reverse=False)  # type: ignore
+        i[0]
+        for i in sorted(
+            enumerate(value.value),
+            key=lambda x: int(RollResult(cast(list, x[1]))),
+            reverse=False,
+        )
     ][:argument]
     indexes_to_remove.sort(reverse=True)
 
@@ -72,7 +79,9 @@ def mod_drop_low(expression: DiceExpression, argument: int | None) -> RollResult
 
 def mod_keep_high(expression: DiceExpression, argument: int | None) -> RollResult:
     if argument is None or argument <= 0:
-        raise ValueError("Keep high required positive argument.", "DICE_KEEP_HIGH_ARGUMENT")
+        raise ValueError(
+            "Keep high required positive argument.", "DICE_KEEP_HIGH_ARGUMENT"
+        )
 
     value: RollResult[int | list[int | list]] = expression.eval()
 
@@ -80,7 +89,11 @@ def mod_keep_high(expression: DiceExpression, argument: int | None) -> RollResul
         return value
 
     indexes_to_remove = [
-        i[0] for i in sorted(enumerate(value.value), key=lambda x: int(RollResult(x[1])))  # type: ignore
+        i[0]
+        for i in sorted(
+            enumerate(value.value),
+            key=lambda x: int(RollResult(cast(list, x[1]))),
+        )
     ][:-argument]
     indexes_to_remove.sort(reverse=True)
 

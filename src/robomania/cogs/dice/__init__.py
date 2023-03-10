@@ -1,12 +1,11 @@
-# type: ignore[name-defined]
 from __future__ import annotations
 
 import logging
 import warnings
 from typing import TYPE_CHECKING
 
-from disnake import ApplicationCommandInteraction
 from disnake.ext import commands
+from disnake.interactions.application_command import ApplicationCommandInteraction
 
 from robomania.cogs.dice.grammar import parse
 from robomania.utils.exceptions import DivByZeroWarning
@@ -18,6 +17,8 @@ logger = logging.getLogger("robomania.cogs.dice")
 
 
 class Dice(commands.Cog):
+    bot: Robomania
+
     def __init__(self, bot: Robomania) -> None:
         self.bot = bot
 
@@ -57,7 +58,9 @@ class Dice(commands.Cog):
             try:
                 with warnings.catch_warnings(record=True) as w:
                     evaluated_expression = parsed_dice.eval_to_list()
-                    internal_div_by_0 = len(w) > 0 and any(issubclass(i.category, DivByZeroWarning) for i in w)
+                    internal_div_by_0 = len(w) > 0 and any(
+                        issubclass(i.category, DivByZeroWarning) for i in w
+                    )
             except ZeroDivisionError as e:
                 message = str(e)
                 error = tr("DIVISION_BY_ZERO")
@@ -71,7 +74,9 @@ class Dice(commands.Cog):
             else:
                 message = "\n".join(
                     f"`{dice}` -> `{result.finalize()}`"
-                    for dice, result in zip(parsed_dice.expressions, evaluated_expression)
+                    for dice, result in zip(
+                        parsed_dice.expressions, evaluated_expression
+                    )
                 )
                 if len(message) >= 1500:
                     message = tr("DICE_MESSAGE_TOO_LONG")

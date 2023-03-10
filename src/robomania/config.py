@@ -26,7 +26,7 @@ class Config:
     debug: Annotated[bool, "DEBUG", False]
 
     @classmethod
-    def load_env(cls, path: str | Path, stream: StringIO = None) -> None:
+    def load_env(cls, path: str | Path, stream: StringIO | None = None) -> None:
         if stream:
             dotenv.load_dotenv(stream=stream)
         else:
@@ -73,7 +73,9 @@ class Settings(BasicSettings):
     db_url: MongoDsn | None = None
 
     @validator("db_url")
-    def validate_url(cls, v: str | None, values: dict[str, Any]) -> MongoDsn:  # noqa: N805
+    def validate_url(
+        cls, v: str | None, values: dict[str, Any]
+    ) -> MongoDsn:  # noqa: N805
         if isinstance(v, MongoDsn):
             return v
 

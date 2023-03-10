@@ -1,13 +1,14 @@
-# type: ignore[name-defined]
 from __future__ import annotations
 
 import asyncio
 import datetime
 import logging
+from typing import cast
 
 import disnake
-import httpx  # type: ignore[attr-defined]
+import httpx
 from disnake.ext import commands, tasks
+from disnake.interactions.application_command import ApplicationCommandInteraction
 
 from robomania import config
 from robomania.bot import Robomania
@@ -55,12 +56,16 @@ class Announcements(commands.Cog):
         logger.info("Waiting for connection to discord...")
         await self.bot.wait_until_ready()
 
-        self.target_channel = self.bot.get_channel(self.target_channel_id)
+        self.target_channel = cast(
+            disnake.TextChannel, self.bot.get_channel(self.target_channel_id)
+        )
         await self._check_for_announcements()
 
     async def _check_for_announcements(self) -> None:
         if self.check_lock.locked():
-            logger.info("Trying to check for announcements, while check is" " already running")
+            logger.info(
+                "Trying to check for announcements, while check is" " already running"
+            )
             return
 
         async with self.check_lock:
@@ -87,14 +92,17 @@ class Announcements(commands.Cog):
 
         async with httpx.AsyncClient() as client:
             await client.post(
-                f"{self.bot.settings.scraping_service_url}posts/posted", json={"ids": [i.post_id for i in posts]}
+                f"{self.bot.settings.scraping_service_url}posts/posted",
+                json={"ids": [i.post_id for i in posts]},
             )
 
     async def download_facebook_posts(self) -> FacebookPosts:
         logger.debug("Downloading facebook posts")
 
         async with httpx.AsyncClient() as client:
-            response = await client.get(f"{self.bot.settings.scraping_service_url}posts/unposted")
+            response = await client.get(
+                f"{self.bot.settings.scraping_service_url}posts/unposted"
+            )
         try:
             raw_posts = response.json().get("data", [])
         except Exception:
@@ -111,7 +119,7 @@ class Announcements(commands.Cog):
         @commands.slash_command(name="check")
         async def command_posts(
             self,
-            inter: disnake.ApplicationCommandInteraction,
+            inter: ApplicationCommandInteraction,
         ) -> None:
             await inter.send("Ok", delete_after=5)
             await self._check_for_announcements()

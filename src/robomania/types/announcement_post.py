@@ -13,7 +13,9 @@ logger = logging.getLogger("robomania.types")
 
 
 class AnnouncementPost(Post[str]):
-    def __init__(self, post: FacebookPostScraped, images: Iterable[str] = None) -> None:
+    def __init__(
+        self, post: FacebookPostScraped, images: Iterable[str] | None = None
+    ) -> None:
         self.timestamp = post.timestamp
         self.url = post.url
 
@@ -38,7 +40,10 @@ class AnnouncementPost(Post[str]):
 
     @classmethod
     def new(cls, post: FacebookPostScraped) -> AnnouncementPost:
-        images = [f"{config.settings.scraping_service_url}posts/image/{i}" for i in post.images]
+        images = [
+            f"{config.settings.scraping_service_url}posts/image/{i}"
+            for i in post.images
+        ]
         return cls(post, images)
 
     async def send(self, target: disnake.TextChannel, **kwargs) -> None:

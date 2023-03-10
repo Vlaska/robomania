@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Awaitable, cast
+from typing import TYPE_CHECKING, Any, Awaitable, Coroutine, Protocol, cast
 
 import disnake
 from attrs import asdict, define, field
 from bson import ObjectId
-from disnake import User
 from pymongo.errors import WriteError
 
 from robomania.bot import Robomania
@@ -25,7 +24,9 @@ class PicrewCountByPostStatus:
     not_posted: int
 
     @classmethod
-    def from_mongo_documents(cls, documents: list[dict[str, int | bool]]) -> PicrewCountByPostStatus:
+    def from_mongo_documents(
+        cls, documents: list[dict[str, int | bool]]
+    ) -> PicrewCountByPostStatus:
         t = {
             "posted": 0,
             "not_posted": 0,
@@ -42,9 +43,17 @@ class PicrewCountByPostStatus:
         return cls(**t)
 
 
+class UserTypeWithId(Protocol):
+    id: int
+
+    @property
+    def mention(self) -> str:
+        pass
+
+
 @define
 class PicrewModel(Model):
-    user: User | None
+    user: UserTypeWithId | None
     link: str
     add_date: datetime
     was_posted: bool
@@ -93,7 +102,9 @@ class PicrewModel(Model):
             await cast(Awaitable, col.update_one({"_id": self.id}, {"$set": document}))
         else:
             try:
-                result: InsertOneResult = await cast(Awaitable, col.insert_one(document))
+                result: InsertOneResult = await cast(
+                    Awaitable, col.insert_one(document)
+                )
             except WriteError as e:
                 if e.code == 11000:
                     raise DuplicateError("Duplicate picrew link")
@@ -102,7 +113,9 @@ class PicrewModel(Model):
                 self.id = result.inserted_id
 
     @classmethod
-    async def get(cls, db: AsyncIOMotorDatabase, pipeline: list[dict[str, Any]]) -> list[PicrewModel]:
+    async def get(
+        cls, db: AsyncIOMotorDatabase, pipeline: list[dict[str, Any]]
+    ) -> list[PicrewModel]:
         col = db.picrew
         aggregator = col.aggregate(pipeline)
         bot = Robomania.get_bot()
@@ -129,7 +142,10 @@ class PicrewModel(Model):
 
     @classmethod
     async def get_random_unposted(cls, db: Database, count: int) -> list[PicrewModel]:
-        pipeline: list[dict] = [{"$match": {"was_posted": False}}, {"$sample": {"size": count}}]
+        pipeline: list[dict] = [
+            {"$match": {"was_posted": False}},
+            {"$sample": {"size": count}},
+        ]
 
         return await cls.get(db, pipeline)
 
@@ -141,12 +157,16 @@ class PicrewModel(Model):
 
     @classmethod
     async def count_posted_and_not_posted(cls, db: Database) -> PicrewCountByPostStatus:
-        pipeline = [
+        pipeline: list[dict[str, Any]] = [
             {"$group": {"_id": "$was_posted", "count": {"$sum": 1}}},
             {"$project": {"_id": 0, "posted": "$_id", "count": 1}},
         ]
 
-        results = await cast(Awaitable, db.picrew.aggregate(pipeline)).to_list(None)  # type: ignore
+        results: list[dict[str, int | bool]] = await cast(
+            Coroutine, db.picrew.aggregate(pipeline)
+        ).to_list(  # type: ignore
+            None
+        )
 
         return PicrewCountByPostStatus.from_mongo_documents(results)
 

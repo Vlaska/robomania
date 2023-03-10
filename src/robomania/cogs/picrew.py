@@ -1,4 +1,3 @@
-# type: ignore[name-defined]
 from __future__ import annotations
 
 import datetime
@@ -7,8 +6,9 @@ from typing import cast
 
 import disnake
 import validators
-from disnake import AllowedMentions, ApplicationCommandInteraction
+from disnake import AllowedMentions
 from disnake.ext import commands, tasks
+from disnake.interactions.application_command import ApplicationCommandInteraction
 
 from robomania import config
 from robomania.bot import Robomania
@@ -36,7 +36,9 @@ class PicrewPost:
         if info.tw:
             tw = f"TW: {info.tw}\n"
 
-        post_text = f"{self.picrew_info.link}\n{tw}" f"Post link dodany przez: {user_mention}"
+        post_text = (
+            f"{self.picrew_info.link}\n{tw}" f"Post link dodany przez: {user_mention}"
+        )
 
         self.post = Post(post_text)
 
@@ -55,7 +57,9 @@ class Picrew(commands.Cog):
         self.bot = bot
 
         target_channel_id = config.settings.picrew_target_channel
-        self.target_channel = cast(disnake.TextChannel, self.bot.get_channel(target_channel_id))
+        self.target_channel = cast(
+            disnake.TextChannel, self.bot.get_channel(target_channel_id)
+        )
         self.automatic_post.start()
 
     @commands.slash_command()
@@ -67,7 +71,7 @@ class Picrew(commands.Cog):
         self,
         inter: ApplicationCommandInteraction,
         url: str,
-        tw: str = None,
+        tw: str | None = None,
     ) -> None:
         """
         Add a new Picrew link to post later. {{ ADD_PICREW }}
@@ -164,7 +168,9 @@ class Picrew(commands.Cog):
         logger.info("Waiting for connection to discord...")
         await self.bot.wait_until_ready()
         if self.target_channel is None:
-            self.target_channel = await self.bot.fetch_channel(config.settings.picrew_target_channel)
+            self.target_channel = await self.bot.fetch_channel(
+                config.settings.picrew_target_channel
+            )
 
 
 def setup(bot: Robomania) -> None:

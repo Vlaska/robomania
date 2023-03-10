@@ -67,7 +67,9 @@ class Image:
         return disnake.File(self.image, self.name)
 
     @staticmethod
-    def prepare_images(images: list[Image]) -> Generator[list[disnake.File], None, None]:
+    def prepare_images(
+        images: list[Image],
+    ) -> Generator[list[disnake.File], None, None]:
         current_image_group: list[disnake.File] = []
         current_total_size = 0
 

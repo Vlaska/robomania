@@ -36,7 +36,9 @@ class HealthcheckClient:
             status = HEALTHCHECK_GOOD_STATUS_CODE
 
         body = json.dumps({"status": message})
-        return web.Response(body=body, status=status, content_type="application/json", charset="utf-8")
+        return web.Response(
+            body=body, status=status, content_type="application/json", charset="utf-8"
+        )
 
     async def shutdown(self) -> None:
         logger.info("Shutting down healthcheck server")
@@ -46,7 +48,7 @@ class HealthcheckClient:
     @classmethod
     async def start(cls, bot: Bot, max_latency: float = 20) -> Self:
         app = web.Application(loop=bot.loop)
-        client = HealthcheckClient(bot, app, max_latency)
+        client = cls(bot, app, max_latency)
         app.add_routes(
             [
                 web.get("/healthcheck", client.healthcheck),
