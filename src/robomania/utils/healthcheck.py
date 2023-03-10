@@ -1,14 +1,15 @@
 import json
 import logging
 
-try:
-    from typing import Self
-except ImportError:
-    from typing_extensions import Self
-
 from aiohttp import web
 from aiohttp.web_request import Request
 from disnake.ext.commands import Bot  # type: ignore[attr-defined]
+from typing_extensions import Self
+
+from robomania.utils.constants import (
+    HEALTHCHECK_GOOD_STATUS_CODE,
+    HEALTHCHECK_POOR_STATUS_CODE,
+)
 
 logger = logging.getLogger("robomania.healthcheck")
 
@@ -29,10 +30,10 @@ class HealthcheckClient:
             or self.bot.is_closed()
         ):
             message = "not ok"
-            status = 530
+            status = HEALTHCHECK_POOR_STATUS_CODE
         else:
             message = "ok"
-            status = 201
+            status = HEALTHCHECK_GOOD_STATUS_CODE
 
         body = json.dumps({"status": message})
         return web.Response(body=body, status=status, content_type="application/json", charset="utf-8")

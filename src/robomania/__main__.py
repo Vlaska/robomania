@@ -4,6 +4,7 @@ import click
 import requests
 
 from robomania.bot import configure_bot, main
+from robomania.utils.constants import HEALTHCHECK_GOOD_STATUS_CODE
 
 
 @click.group(invoke_without_command=True)
@@ -30,7 +31,7 @@ def healthcheck() -> int:
         print(e)
         return 1
 
-    if response.status_code == 201:
+    if response.status_code == HEALTHCHECK_GOOD_STATUS_CODE:
         return 0
     return 1
 
