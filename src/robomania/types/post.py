@@ -24,7 +24,7 @@ ImageType = TypeVar(
 
 
 class Post(Generic[ImageType]):
-    _images: list[ImageType] | None = None
+    _images: list[ImageType]
     _text: str
     wrapped_text: list[str]
 

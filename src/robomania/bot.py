@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from datetime import datetime
 from importlib import resources
 from pathlib import Path
 from typing import Generator, Protocol, cast
@@ -31,7 +30,6 @@ class Translator(Protocol):
 
 class Robomania(commands.Bot):
     client: AsyncIOMotorClient
-    announcements_last_checked: datetime = datetime(1, 1, 1)
     settings: Settings = settings
     __bot: Robomania
     __blocking_db_counter = 0

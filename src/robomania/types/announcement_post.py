@@ -18,6 +18,7 @@ class AnnouncementPost(Post[str]):
     ) -> None:
         self.timestamp = post.timestamp
         self.url = post.url
+        self.post_id = post.post_id
 
         super().__init__(post.text, images)
 
@@ -47,4 +48,7 @@ class AnnouncementPost(Post[str]):
         return cls(post, images)
 
     async def send(self, target: disnake.TextChannel, **kwargs) -> None:
+        logger.info(
+            f"Sending post with id={self.post_id} and {len(self._images)} images."
+        )
         await super().send(target, suppress_embeds=True, **kwargs)
