@@ -12,9 +12,18 @@ services:
       - db:/data/db
     ports:
       - 27017:27017
+    hostname: mongo
     networks:
       - robomania_database
+      - default
+    deploy:
+      resources:
+        limits:
+          memory: 4gb
 
 networks:
   robomania_database:
     driver: bridge
+  front:
+    name: host
+    external: true

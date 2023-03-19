@@ -5,7 +5,7 @@ import inspect
 import logging
 from typing import BinaryIO, Generator, Protocol, TextIO, Type, TypeVar
 
-logger = logging.getLogger('robomania.utils')
+logger = logging.getLogger("robomania.utils")
 
 
 class Preconfigurable(Protocol):
@@ -14,14 +14,12 @@ class Preconfigurable(Protocol):
         raise NotImplementedError
 
 
-_preconfigurable = TypeVar('_preconfigurable', bound=Preconfigurable)
-Buffer = TypeVar('Buffer', bound=TextIO | BinaryIO)
+_preconfigurable = TypeVar("_preconfigurable", bound=Preconfigurable)
+Buffer = TypeVar("Buffer", bound=TextIO | BinaryIO)
 
 
 @contextlib.contextmanager
-def rewindable_buffer(
-    *args: Buffer
-) -> Generator[tuple[Buffer, ...], None, None]:
+def rewindable_buffer(*args: Buffer) -> Generator[tuple[Buffer, ...], None, None]:
     try:
         yield args
     finally:
@@ -34,6 +32,6 @@ def preconfigure(cls: Type[_preconfigurable]) -> Type[_preconfigurable]:
         cls.preconfigure()
     except AttributeError:
         file = inspect.getfile(cls)
-        logger.error(f'Preconfiguration method missing: {file}:{cls.__name__}')
+        logger.error(f"Preconfiguration method missing: {file}:{cls.__name__}")
 
     return cls

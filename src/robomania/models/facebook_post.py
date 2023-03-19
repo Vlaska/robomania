@@ -5,7 +5,7 @@ from typing import TypeAlias
 
 from pydantic import BaseModel
 
-logger = logging.getLogger('robomania.types')
+logger = logging.getLogger("robomania.types")
 
 
 class FacebookPostScraped(BaseModel):

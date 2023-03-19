@@ -15,7 +15,7 @@
             "pattern": "logs/robomania.log"
         }
     ],
-    "flake8.args": [
-        "--ignore=N805"
-    ]
+    "files.exclude": {
+        ".venv": true
+    }
 }

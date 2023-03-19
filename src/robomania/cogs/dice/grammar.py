@@ -3,9 +3,17 @@ from __future__ import annotations
 from arpeggio import PTNodeVisitor, visit_parse_tree
 from arpeggio.cleanpeg import ParserPEG
 
-from robomania.cogs.dice.dice import (Dice, DiceExpression, Expression, Mod,
-                                      ModEnum, OperatorEnum, Roll, Sequence,
-                                      Value)
+from robomania.cogs.dice.dice import (
+    Dice,
+    DiceExpression,
+    Expression,
+    Mod,
+    ModEnum,
+    OperatorEnum,
+    Roll,
+    Sequence,
+    Value,
+)
 
 grammar = r"""
 number = r'\d+'
@@ -32,7 +40,7 @@ roll = expression ("," expression)* EOF
 """
 
 
-grammar_parser = ParserPEG(grammar, 'roll')
+grammar_parser = ParserPEG(grammar, "roll")
 
 
 class DiceVisitor(PTNodeVisitor):
@@ -50,12 +58,12 @@ class DiceVisitor(PTNodeVisitor):
 
     def visit_keep_discard(self, node, children) -> ModEnum:
         match children[0]:
-            case 'd' | 'dl':
+            case "d" | "dl":
                 return ModEnum.DISCARD_LOW
-            case 'k' | 'kh':
+            case "k" | "kh":
                 return ModEnum.KEEP_HIGH
             case _:
-                raise ValueError('WTF?', 'WTF?')
+                raise ValueError("WTF?", "WTF?")
 
     def visit_sum(self, node, children) -> ModEnum:
         return ModEnum.SUM

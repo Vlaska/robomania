@@ -15,7 +15,7 @@ __all__ = [i.__name__ for i in models]
 def create_collections() -> None:
     bot = Robomania.get_bot()
     with bot.blocking_db():
-        db = bot.get_db('robomania')
+        db = bot.get_db("robomania")
 
         for i in models:
             if isinstance(i, CollectionSetup):

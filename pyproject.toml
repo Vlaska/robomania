@@ -8,11 +8,10 @@ requires-python = ">=3.10"
 name = "Robomania"
 version = "0.4.1"
 description = "Bot for discord server"
-authors = ["June Gierada <you@example.com>"]
+authors = ["June Gierada <vlaska8888@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-facebook-scraper = "^0.2.59"
 disnake = "^2.5.2"
 aiohttp = "^3.8.1"
 motor = {extras = ["srv"], version = "^3.0.0"}
@@ -28,14 +27,17 @@ pydantic = "^1.10.2"
 Arpeggio = "^2.0.0"
 numpy = "^1.24.1"
 httpx = "^0.23.3"
+requests = "^2.28.2"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "^1.7.0"
-flake8 = "^5.0.4"
-isort = "^5.10.1"
-mypy = "^0.971"
+isort = "*"
+mypy = "*"
 types-pytz = "^2022.2.1.0"
 hypothesis = "^6.56.4"
+types-requests = "^2.28.11.15"
+black = "*"
+ruff = "*"
+pre-commit = "^3.1.1"
 
 [tool.poetry.group.test]
 optional = true
@@ -56,7 +58,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 testpaths = [
-    "tests",
+  "tests",
 ]
 asyncio_mode = "strict"
 addopts = "--cov=src/robomania --cov-report html --cov-report xml:cov.xml"
@@ -66,16 +68,56 @@ python_version = "3.10"
 show_error_codes = true
 ignore_missing_imports = true
 plugins = [
-    "disnake.ext.mypy_plugin",
-    "pydantic.mypy",
-    "numpy.typing.mypy_plugin"
+  "disnake.ext.mypy_plugin",
+  "pydantic.mypy",
+  "numpy.typing.mypy_plugin"
 ]
+ignore_missing_imports_per_module = true
 
-[tool.autopep8]
-max_line_length = 79
-in-place = true
-recursive = true
-aggressive = 3
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.isort]
+profile = "black"
+
+[tool.ruff]
+select = [
+  "E",
+  "F",
+  "C4",
+  "PT",
+  "PLC",
+  "PLE",
+  "PLR",
+  "PLW",
+  "C90"
+]
+exclude = [
+  ".bzr",
+  ".direnv",
+  ".eggs",
+  ".git",
+  ".hg",
+  ".mypy_cache",
+  ".nox",
+  ".pants.d",
+  ".pytype",
+  ".ruff_cache",
+  ".svn",
+  ".tox",
+  ".venv",
+  "__pypackages__",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+  "node_modules",
+  "venv",
+]
+line-length = 88
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+ignore=["PLR2004"]
 
 [tool.coverage.run]
 source = ["src/robomania"]
@@ -84,12 +126,12 @@ omit = ["src/robomania/cogs/tester.py", "src/robomania/cogs/planner.py"]
 [tool.coverage.report]
 skip_empty = true
 exclude_lines = [
-    "if __name__ == .__main__.:",
-    "if TYPE_CHECKING:",
-    "def __str__",
-    "def __repr__",
-    "pragma: no cover",
-    "@click",
-    "if Config.debug:",
-    "raise NotImplementedError"
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+  "def __str__",
+  "def __repr__",
+  "pragma: no cover",
+  "@click",
+  "if Config.debug:",
+  "raise NotImplementedError"
 ]

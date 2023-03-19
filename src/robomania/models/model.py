@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import (TYPE_CHECKING, Any, Protocol, Type, TypeVar,
-                    runtime_checkable)
+from typing import TYPE_CHECKING, Any, Protocol, Type, TypeVar, runtime_checkable
 
 if TYPE_CHECKING:
     from pymongo.database import Database
 
 
-TModel = TypeVar('TModel', bound='Model')
+TModel = TypeVar("TModel", bound="Model")
 
 
 class Model(Protocol):

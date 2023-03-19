@@ -12,7 +12,7 @@ from PIL import Image as PILImage
 
 from robomania.utils import rewindable_buffer
 
-logger = logging.getLogger('robomania.types')
+logger = logging.getLogger("robomania.types")
 MAX_IMAGES_PER_MESSAGE = 10
 MAX_TOTAL_SIZE_OF_IMAGES = 8 * 1024 * 1024
 
@@ -32,7 +32,7 @@ class Image:
 
         with rewindable_buffer(self._data, self.image) as (data, image):
             img = PILImage.open(data)
-            img.convert('RGB').save(image, 'jpeg')
+            img.convert("RGB").save(image, "jpeg")
 
     def _reduce_image_resolution(self, factor: float) -> None:
         self.image = io.BytesIO()
@@ -42,7 +42,7 @@ class Image:
             old_x, old_y = img.size
             new_size = (int(old_x * factor), int(old_y * factor))
             resized_img = img.resize(new_size)
-            resized_img.save(image, 'jpeg')
+            resized_img.save(image, "jpeg")
 
     def reduce_size(self, max_size: int) -> None:
         self._change_image_format()
@@ -56,9 +56,7 @@ class Image:
             if self.size <= max_size:
                 return
 
-        raise ValueError(
-            'Could not reduce image size below given size constraint.'
-        )
+        raise ValueError("Could not reduce image size below given size constraint.")
 
     @property
     def size(self) -> int:
@@ -70,7 +68,7 @@ class Image:
 
     @staticmethod
     def prepare_images(
-        images: list[Image]
+        images: list[Image],
     ) -> Generator[list[disnake.File], None, None]:
         current_image_group: list[disnake.File] = []
         current_total_size = 0
@@ -80,16 +78,16 @@ class Image:
                 image = images.pop(0)
 
                 if image.size > MAX_TOTAL_SIZE_OF_IMAGES:
-                    logger.info('Image too big, trying to reduce size.')
+                    logger.info("Image too big, trying to reduce size.")
                     try:
                         image.reduce_size(MAX_TOTAL_SIZE_OF_IMAGES)
                     except ValueError:
-                        logger.error('Image still too big, skipping.')
+                        logger.error("Image still too big, skipping.")
                         continue
 
                 if (
-                    len(current_image_group) + 1 > MAX_IMAGES_PER_MESSAGE or
-                    image.size + current_total_size > MAX_TOTAL_SIZE_OF_IMAGES
+                    len(current_image_group) + 1 > MAX_IMAGES_PER_MESSAGE
+                    or image.size + current_total_size > MAX_TOTAL_SIZE_OF_IMAGES
                 ):
                     yield current_image_group
 
@@ -97,29 +95,25 @@ class Image:
                     current_total_size = 0
 
                 current_total_size += image.size
-                current_image_group.append(
-                    disnake.File(image.image, image.name)
-                )
+                current_image_group.append(disnake.File(image.image, image.name))
         except IndexError:
             pass
 
         yield current_image_group
 
     @staticmethod
-    async def download_images(
-        images: list[str]
-    ) -> list[Image]:
+    async def download_images(images: list[str]) -> list[Image]:
         out = []
         async with aiohttp.ClientSession() as session:
             for url in images:
                 async with session.get(url) as resp:
                     if resp.status != 200:
-                        logger.warning('Problem with image download.')
+                        logger.warning("Problem with image download.")
                         continue
 
                     data = io.BytesIO(await resp.read())
                     image_path = Path(urlparse(url).path)
                     out.append(Image(data, image_path.name))
 
-        logger.debug(f'Downloaded {len(out)} images')
+        logger.debug(f"Downloaded {len(out)} images")
         return out

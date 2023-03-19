@@ -4,12 +4,13 @@ import click
 import requests
 
 from robomania.bot import configure_bot, main
+from robomania.utils.constants import HEALTHCHECK_GOOD_STATUS_CODE
 
 
 @click.group(invoke_without_command=True)
 @click.pass_context
 def cli(ctx: click.Context) -> None:
-    if ctx.invoked_subcommand != 'healthcheck':
+    if ctx.invoked_subcommand != "healthcheck":
         configure_bot()
     if ctx.invoked_subcommand is None:
         ctx.invoke(run)
@@ -25,12 +26,12 @@ def setup_database() -> None:
 @cli.command()
 def healthcheck() -> int:
     try:
-        response = requests.get('http://localhost:6302/healthcheck')
+        response = requests.get("http://localhost:6302/healthcheck")
     except Exception as e:
         print(e)
         return 1
 
-    if response.status_code == 201:
+    if response.status_code == HEALTHCHECK_GOOD_STATUS_CODE:
         return 0
     return 1
 
@@ -40,5 +41,5 @@ def run() -> None:
     main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()
