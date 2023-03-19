@@ -14,5 +14,8 @@
             "title": "Logging: Robomania",
             "pattern": "logs/robomania.log"
         }
-    ]
+    ],
+    "files.exclude": {
+        ".venv": true
+    }
 }

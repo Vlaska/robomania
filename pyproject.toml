@@ -72,6 +72,7 @@ plugins = [
   "pydantic.mypy",
   "numpy.typing.mypy_plugin"
 ]
+ignore_missing_imports_per_module = true
 
 [tool.black]
 line-length = 88

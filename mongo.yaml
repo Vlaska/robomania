@@ -16,6 +16,10 @@ services:
     networks:
       - robomania_database
       - default
+    deploy:
+      resources:
+        limits:
+          memory: 4gb
 
 networks:
   robomania_database:
