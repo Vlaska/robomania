@@ -24,6 +24,7 @@
     "DICE_CANNOT_NEGATE_GROUP": "Nie można zanegować grupy.",
     "DICE_INTERNAL_DIV_BY_ZERO": "Podczas ewaluowania rzutu nastąpiło dzielenie przez 0 (prawdopodobnie spowodowane przez dzielenie przez grupę). Z tego powodu dzielenie zostało pominięte.",
     "DICE_MESSAGE_TOO_LONG": "Wynik rzutu przekroczył maksymalną długość wiadomości.",
+    "DICE_EXPLODE_BASE_1": "Nie można eksplodować kości o bazie 1.",
     "INTERNAL_ERROR": "Nastąpił błąd wewnętrzny.",
     "DIVISION_BY_ZERO": "Dzielenie przez 0.",
     "POLL_CREATE_CREATED_BY_ON": "utworzył",

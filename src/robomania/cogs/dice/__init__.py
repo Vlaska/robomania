@@ -55,6 +55,7 @@ class Dice(commands.Cog):
                 await inter.response.send_message(tr("DICE_INCORRECT_EXPRESSION"))
                 return
 
+            await inter.response.defer()
             try:
                 with warnings.catch_warnings(record=True) as w:
                     evaluated_expression = parsed_dice.eval_to_list()

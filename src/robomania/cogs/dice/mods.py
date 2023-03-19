@@ -30,6 +30,9 @@ def mod_explode(expression: DiceExpression, argument: int | None) -> RollResult:
             pass
         raise ValueError("Cannot explode a group.", "DICE_EXPLOSION_DICE_ONLY")
 
+    if dice.base == 1:
+        raise ValueError("Cannot explode dice with base 1.", "DICE_EXPLODE_BASE_1")
+
     out: RollResult[list[int]] = RollResult([])
 
     while True:
