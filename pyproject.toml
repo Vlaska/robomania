@@ -1,12 +1,6 @@
-[project]
-name = "Robomania"
-version = "0.4.1"
-description = "Bot for use on Domeq Krk discord server"
-requires-python = ">=3.10"
-
 [tool.poetry]
 name = "Robomania"
-version = "0.4.1"
+version = "0.4.2"
 description = "Bot for discord server"
 authors = ["June Gierada <vlaska8888@gmail.com>"]
 
