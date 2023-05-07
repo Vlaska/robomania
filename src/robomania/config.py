@@ -69,7 +69,7 @@ class Settings(BasicSettings):
 
     time_betweent_announcements_check: int = 10
 
-    asset_base_url: AnyHttpUrl
+    assets_base_url: AnyHttpUrl
 
     class Config:
         env_file = ".env"
