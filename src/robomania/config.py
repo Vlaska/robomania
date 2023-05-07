@@ -72,6 +72,14 @@ class Settings(BasicSettings):
 
     assets_base_url: AnyHttpUrl
 
+    load_extensions: tuple[str, ...] = (
+        "robomania.cogs.announcements",
+        "robomania.cogs.picrew",
+        "robomania.cogs.dice",
+        "robomania.cogs.poll",
+        "robomania.cogs.info",
+    )
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
