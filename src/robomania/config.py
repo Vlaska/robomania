@@ -21,6 +21,7 @@ class BasicSettings(BaseSettings, extra=Extra.allow):
 
 class Settings(BasicSettings):
     discord_token: SecretStr
+    environment: str = ""
 
     db_username: str
     db_password: SecretStr
@@ -65,7 +66,7 @@ class Settings(BasicSettings):
 
     announcements_target_channel: int
     picrew_target_channel: int
-    scraping_service_url: str
+    scraping_service_url: str = ""
 
     time_betweent_announcements_check: int = 10
 

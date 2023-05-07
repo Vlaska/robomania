@@ -4,10 +4,10 @@ from typing import cast
 
 from disnake import Embed
 from disnake.ext import commands
-from disnake.guild import GuildMessageable
 from disnake.interactions.application_command import ApplicationCommandInteraction
 
 from robomania.bot import Robomania
+from robomania.utils.types import GuildMessageable
 
 # @bot.event
 # async def on_message(message):
