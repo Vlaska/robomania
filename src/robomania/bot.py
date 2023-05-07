@@ -162,14 +162,8 @@ def configure_bot(config_path: str | Path = ".env") -> None:
 
     bot.setup()
 
-    bot.load_extension("robomania.cogs.announcements")
-    bot.load_extension("robomania.cogs.picrew")
-    bot.load_extension("robomania.cogs.dice")
-    bot.load_extension("robomania.cogs.poll")
-    bot.load_extension("robomania.cogs.info")
-
-    if settings.debug:
-        bot.load_extension("robomania.cogs.tester")
+    for extension in settings.load_extensions:
+        bot.load_extension(extension)
 
 
 def main() -> None:
