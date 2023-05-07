@@ -4,7 +4,15 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseSettings, Extra, Field, MongoDsn, SecretStr, validator
+from pydantic import (
+    AnyHttpUrl,
+    BaseSettings,
+    Extra,
+    Field,
+    MongoDsn,
+    SecretStr,
+    validator,
+)
 
 
 class BasicSettings(BaseSettings, extra=Extra.allow):
@@ -60,6 +68,8 @@ class Settings(BasicSettings):
     scraping_service_url: str
 
     time_betweent_announcements_check: int = 10
+
+    asset_base_url: AnyHttpUrl
 
     class Config:
         env_file = ".env"
