@@ -44,5 +44,24 @@
     "POLL_OPTION_NUMBERS": "liczby",
     "POLL_OPTION_HEARTS": "serca",
     "POLL_OPTION_LIKE": "kciuk",
-    "POLL_OPTION_YES_NO": "tak nie"
+    "POLL_OPTION_YES_NO": "tak nie",
+
+    "DISPLAY_INFO_NAME": "info",
+    "DISPLAY_INFO_DESCRIPTION": "Wyświetl informacje powiązane z serwerem i nie tylko",
+    "INFO_FUNDRAISER_NAME": "zrzutka",
+    "INFO_FUNDRAISER_DESCRIPTION": "Wyświetl informacje związane z zrzutką na dalsze działanie Dom EQ",
+    "LEGAL_ADVICE_NAME": "pomoc-prawna",
+    "LEGAL_ADVICE_DESCRIPTION": "Wyświetl informacje kontaktowe do pomocy prawnej oferowanej przez Fundację Znaki Równości",
+    "DOMEQ_ADDRESS_NAME": "adres",
+    "DOMEQ_ADDRESS_DESCRIPTION": "Wyświetl adres Dom EQ oraz jak możesz się dostać do niego komunikacją miejską",
+    "FANIMANI_NAME": "fanimani",
+    "FANIMANI_DESCRIPTION": "Wyświetl link do Fanimani, dzięki któremu możesz wesprzeć Dom EQ",
+    "SUPPORT_FUNDATION_NAME": "wsparcie",
+    "SUPPORT_FUNDATION_DESCRIPTION": "Wyświetl linki dzięki którym możesz wesprzeć Fundację Znaki Równości",
+    "FOUNDATION_CONTACT_NAME": "kontakt",
+    "FOUNDATION_CONTACT_DESCRIPTION": "Wyświetl informacje kontaktowe",
+    "WHY_MARIANNA_LATE_NAME": "spozniona-marianna",
+    "WHY_MARIANNA_LATE_DESCRIPTION": "Czemu Marianna się spóźniła?",
+    "SERVER_INVITE_NAME": "zaproszenie",
+    "SERVER_INVITE_DESCRIPTION": "Wyświetl link z zaproszeniem do tego serwera"
 }

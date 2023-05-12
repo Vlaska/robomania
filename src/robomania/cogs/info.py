@@ -37,7 +37,7 @@ class Info(commands.Cog):
 
     @info.sub_command()
     async def fundraiser(self, inter: ApplicationCommandInteraction) -> None:
-        """Display info about DOM EQ's fundraiser  {{ INFO_FUNDRAISER }}
+        """Display info regarding fundraiser supporting Dom EQ  {{ INFO_FUNDRAISER }}
 
         Parameters
         ----------
@@ -49,7 +49,7 @@ class Info(commands.Cog):
             {
                 "title": "Zrzutka",
                 "color": 0xE83E3E,
-                "thumbnail": {"url": get_asset_url("zrzutka-icon.png", "icons")},
+                "thumbnail": {"url": get_asset_url("zrzutka-icon.png", "icon")},
                 "url": "https://zrzutka.pl/6eh5d2",
                 "description": (
                     "Hej. Jeżeli możesz, wesprzyj Dom EQ na oficalnej zrzutce."
@@ -60,7 +60,7 @@ class Info(commands.Cog):
 
     @info.sub_command()
     async def legal_advice(self, inter: ApplicationCommandInteraction) -> None:
-        """Display info about legal advice offered by DOM EQ  {{ LEGAL_ADVICE }}
+        """Display contact info to Fundations legal help  {{ LEGAL_ADVICE }}
 
         Parameters
         ----------
@@ -75,6 +75,7 @@ class Info(commands.Cog):
                     "Potrzebujesz pomocy prawnej? Skontaktuj się z "
                     "prawnikami fundacji."
                 ),
+                "color": 0x2F89DE,
                 "fields": [
                     {"name": "Email", "value": "pomoc.prawna@znakirownosci.org.pl"}
                 ],
@@ -83,7 +84,8 @@ class Info(commands.Cog):
 
     @info.sub_command()
     async def address(self, inter: ApplicationCommandInteraction) -> None:
-        """Display DOM EQs address  {{ DOMEQ_ADDRESS }}
+        """Display address of Dom EQ and how to get there with public transport  \
+        {{ DOMEQ_ADDRESS }}
 
         Parameters
         ----------
@@ -95,8 +97,9 @@ class Info(commands.Cog):
             {
                 "title": "Jak dostać się do Dom EQ",
                 "description": (
-                    "Zastanawiasz się, jak dostać się do Dom EQ? " "Coś tam coś tam..."
+                    "Zastanawiasz się, jak dostać się do Dom EQ? Coś tam coś tam..."
                 ),
+                "color": 0xBA41D5,
                 "fields": [
                     {"name": "Adres", "value": "ul.Czyżówka 43,\n30-526 Kraków"},
                     {
@@ -111,7 +114,7 @@ class Info(commands.Cog):
                     {
                         "name": "Komunikacja miejska",
                         "value": (
-                            "Do domqu można łatwo dostać się komunikacją miejską. "
+                            "Do Dom EQ można łatwo dostać się komunikacją miejską. "
                             "Wystarczy złapać coś, co jedzie na Rondo Matecznego.\n"
                             "Autobusy: 144, 164, 169, 173, 179, 301, 304, "
                             "469, 503, 608, 610\n"
@@ -124,7 +127,7 @@ class Info(commands.Cog):
 
     @info.sub_command()
     async def fanimani(self, inter: ApplicationCommandInteraction) -> None:
-        """Display link to Fanimani  {{ SUPPORT_FOUNDATION }}
+        """Display link to Fanimani, with which you can support Dom EQ  {{ FANIMANI }}
 
         Parameters
         ----------
@@ -213,17 +216,37 @@ class Info(commands.Cog):
             },
         )
 
-    @commands.slash_command()
-    async def invite(self, inter: ApplicationCommandInteraction) -> None:
-        """Get this servers invite link  {{ SERVER_INVITE }}
+    @info.sub_command()
+    async def why_was_marianna_late(self, inter: ApplicationCommandInteraction) -> None:
+        """Wonder why Marianna is late? I can answer it for you  {{ WHY_MARIANNA_LATE }}
 
         Parameters
         ----------
         inter : :class:`ApplicationCommandInteraction`
             Command interaction
         """
+        await self.send_embed(
+            inter,
+            {
+                "title": "Czemu Marianna się spóźnia?",
+                "color": 0xFF18F7,
+                "image": {
+                    "url": get_asset_url("139-kombinat.png", "image"),
+                },
+            },
+        )
 
     if settings.debug:
+
+        @commands.slash_command()
+        async def invite(self, inter: ApplicationCommandInteraction) -> None:
+            """Display invite link to this server  {{ SERVER_INVITE }}
+
+            Parameters
+            ----------
+            inter : :class:`ApplicationCommandInteraction`
+                Command interaction
+            """
 
         @commands.slash_command()
         async def embed(self, inter: ApplicationCommandInteraction, code: str) -> None:
