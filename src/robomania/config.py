@@ -4,7 +4,15 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseSettings, Extra, Field, MongoDsn, SecretStr, validator
+from pydantic import (
+    AnyHttpUrl,
+    BaseSettings,
+    Extra,
+    Field,
+    MongoDsn,
+    SecretStr,
+    validator,
+)
 
 
 class BasicSettings(BaseSettings, extra=Extra.allow):
@@ -13,6 +21,7 @@ class BasicSettings(BaseSettings, extra=Extra.allow):
 
 class Settings(BasicSettings):
     discord_token: SecretStr
+    environment: str = ""
 
     db_username: str
     db_password: SecretStr
@@ -57,9 +66,19 @@ class Settings(BasicSettings):
 
     announcements_target_channel: int
     picrew_target_channel: int
-    scraping_service_url: str
+    scraping_service_url: str = ""
 
     time_betweent_announcements_check: int = 10
+
+    assets_base_url: AnyHttpUrl
+
+    load_extensions: tuple[str, ...] = (
+        "robomania.cogs.announcements",
+        "robomania.cogs.picrew",
+        "robomania.cogs.dice",
+        "robomania.cogs.poll",
+        "robomania.cogs.info",
+    )
 
     class Config:
         env_file = ".env"

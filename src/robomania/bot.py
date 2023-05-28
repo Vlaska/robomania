@@ -77,8 +77,8 @@ class Robomania(commands.Bot):
         await super().close()
 
     def get_db(self, name: str) -> Database:
-        if settings.debug:
-            name = f"{name}-dev"
+        if settings.environment:
+            name = f"{name}-{settings.environment}"
         return self.client[name]
 
     @classmethod
@@ -162,13 +162,8 @@ def configure_bot(config_path: str | Path = ".env") -> None:
 
     bot.setup()
 
-    bot.load_extension("robomania.cogs.announcements")
-    bot.load_extension("robomania.cogs.picrew")
-    bot.load_extension("robomania.cogs.dice")
-    bot.load_extension("robomania.cogs.poll")
-
-    if settings.debug:
-        bot.load_extension("robomania.cogs.tester")
+    for extension in settings.load_extensions:
+        bot.load_extension(extension)
 
 
 def main() -> None:
