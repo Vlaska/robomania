@@ -38,7 +38,7 @@
     "POLL_CREATE_CREATED_BY_ONA": "utworzyła",
     "POLL_CREATE_CREATED_BY_ONO": "utworzyło",
     "POLL_CREATE_MESSAGE_WITH_PRONOUNS_TEMPLATE": "{user} {created} nową ankietę: \"{question}\"",
-    "POLL_CREATE_MESSAGE_TEMPLATE": "Ankieta stworzona przez użytkownika {user}: \"{question}\"",
+    "POLL_CREATE_MESSAGE_TEMPLATE": "Ankieta stworzona przez {user}: \"{question}\"",
     "POLL_TOO_MANY_OPTIONS": "Wybrany styl obsługuje tylko {num_of_options} opcji.",
     "POLL_CREATE_NAME": "ankieta",
     "POLL_CREATE_DESCRIPTION": "Utwórz ankietę",
