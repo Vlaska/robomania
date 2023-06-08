@@ -7,12 +7,12 @@ import disnake
 
 from robomania import config
 from robomania.models.facebook_post import FacebookPostScraped
-from robomania.types.post import Post
+from robomania.types.post import PostOld
 
 logger = logging.getLogger("robomania.types")
 
 
-class AnnouncementPost(Post[str]):
+class AnnouncementPost(PostOld[str]):
     def __init__(
         self, post: FacebookPostScraped, images: Iterable[str] | None = None
     ) -> None:
