@@ -5,13 +5,15 @@ from textwrap import TextWrapper
 from typing import Protocol
 
 import disnake
-from disnake import ApplicationCommandInteraction, Embed, File
+from disnake import Embed, File
+from disnake.interactions import ApplicationCommandInteraction
 from typing_extensions import Self
 
 from robomania.types.image import Image
 from robomania.utils.pipe import Pipe
 
 MAX_CHARACTERS_PER_POST = 2000
+MAX_CHARACTERS_FOR_EMBED = 4096
 
 space_regex = re.compile(" +")
 space_before_punctuation = re.compile(" (?=[.,?!–—-])")
@@ -34,11 +36,11 @@ class Message:
         self,
         text: str = "",
         images: list[Image] | None = None,
-        embeds: list["Embed"] | None = None,
+        embeds: list[Embed] | None = None,
     ) -> None:
         self.text = text
-        if images and embeds and any(self.does_embed_have_files(i) for i in embeds):
-            raise ValueError("Cannot pass both images and embeds with files to send.")
+        # if images and embeds and any(self.does_embed_have_files(i) for i in embeds):
+        #     raise ValueError("Cannot pass both images and embeds with files to send.")
 
         self.images = [i.file for i in (images or [])]
         self.embeds = embeds or []
@@ -80,11 +82,11 @@ class Message:
         if isinstance(message_target, ApplicationCommandInteraction):
             send = message_target.response.send_message
         else:
-            send = message_target.send
+            send = message_target.send  # type: ignore
 
         await send(
             self.text or None,
-            embeds=self.embeds if not separate_embeds else None,
+            embeds=self.embeds if not separate_embeds else [],
             files=self.images,
         )
         if separate_embeds:
@@ -97,7 +99,7 @@ class TextProcessorProtocol(Protocol):
 
 
 class TextProcessor(TextProcessorProtocol):
-    wrapper: TextWrapper = TextWrapper(
+    wrapper = TextWrapper(
         MAX_CHARACTERS_PER_POST, expand_tabs=False, replace_whitespace=False
     )
 
@@ -121,6 +123,12 @@ class TextProcessor(TextProcessorProtocol):
         return self._wrap_text(self.text_processing_pipeline(text))
 
 
+class EmbedTextProcessor(TextProcessor):
+    wrapper = TextWrapper(
+        MAX_CHARACTERS_FOR_EMBED, expand_tabs=False, replace_whitespace=False
+    )
+
+
 class MessageBuilder:
     messages: list[Message]
 
@@ -132,7 +140,7 @@ class MessageBuilder:
     def process_text(self, text: str) -> list[str]:
         return self.text_processor(text)
 
-    def text_with_images_message(self, text: str, images: list[Image]) -> None:
+    def text_with_images_message(self, text: str, images: list[Image]) -> Self:
         i: object
         *split_text, last_text = self.process_text(text)
 
@@ -147,14 +155,20 @@ class MessageBuilder:
             for i in image_batcher:
                 self.add_images(i).new_message()
 
-    def message_with_embed_and_images(self, embed: Embed, images: list[Image]) -> None:
-        self.add_embed(embed).new_message()
+        return self
+
+    def message_with_embeds_and_images(
+        self, embeds: list[Embed], images: list[Image]
+    ) -> Self:
+        self.add_embeds(embeds).new_message()
 
         if images:
             image_batcher = Image.prepare_images(images)
 
             for i in image_batcher:
                 self.add_images(i).new_message()
+
+        return self
 
     def new_message(self) -> Self:
         self.current_message = Message()
@@ -185,3 +199,9 @@ class MessageBuilder:
 
         self.current_message.embeds.append(embed)
         return self
+
+    async def send(
+        self, message_target: ApplicationCommandInteraction | disnake.abc.Messageable
+    ) -> None:
+        for i in self.messages:
+            await i.send(message_target)

@@ -67,7 +67,7 @@ class Announcements(commands.Cog):
     async def send_annoucements(self, posts: FacebookPosts) -> None:
         logger.info(f"Sending {len(posts)} announcements")
         for post in posts:
-            announcement = await AnnouncementPost.new(post)
+            announcement = AnnouncementPost.new(post)
             await announcement.send(self.target_channel)
 
         async with httpx.AsyncClient() as client:

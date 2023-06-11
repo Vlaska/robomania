@@ -10,7 +10,7 @@ logger = logging.getLogger("robomania.types")
 
 class FacebookSubpost(BaseModel, extra=Extra.allow):
     text: str
-    images: list[dict]
+    images: list[str]
     author: str
     timestamp: int
     publish_date: str
