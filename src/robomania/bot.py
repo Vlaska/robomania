@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+from contextvars import ContextVar
 from importlib import resources
 from pathlib import Path
 from typing import Generator, Protocol, cast
@@ -34,6 +35,11 @@ class Robomania(commands.Bot):
     __bot: Robomania
     __blocking_db_counter = 0
     timezone = pytz.timezone("Europe/Warsaw")
+
+    _current_locale = ContextVar(
+        "_current_locale",
+        default=disnake.enums.Locale.en_GB,
+    )
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -88,17 +94,22 @@ class Robomania(commands.Bot):
         except AttributeError:
             raise NoInstanceError("No bot instance was created.")
 
-    def tr(
-        self, key: str, locale: disnake.enums.Locale, default: str | None = None
-    ) -> str:
+    @classmethod
+    def tr(cls, key: str, default: str | None = None) -> str:
+        bot = cls.get_bot()
+        locale = cls._current_locale.get()
+
         logger.debug(f'Get translation: {{"{locale}": "{key}"}}')
         try:
-            translations = self.i18n.get(key)
+            translations = bot.i18n.get(key)
             assert translations
             value = translations.get(locale.value, None)
         except (disnake.LocalizationKeyError, AttributeError):
             logger.warning(f'Missing localization for key: "{key}"')
             value = None
+
+        if value is None and default:
+            return default
 
         if value is None:
             logger.warning(
@@ -106,19 +117,18 @@ class Robomania(commands.Bot):
             )
             value = DefaultLocale.get(key)
 
-        if value == key and default:
-            return default
-
         return value
 
+    @classmethod
     @contextlib.contextmanager
     def localize(
-        self, locale: disnake.enums.Locale
+        cls, locale: disnake.enums.Locale
     ) -> Generator[Translator, None, None]:
-        def tr(key: str, default: str | None = None) -> str:
-            return self.tr(key, locale, default)
-
-        yield tr
+        token = cls._current_locale.set(locale)
+        try:
+            yield cls.tr
+        finally:
+            cls._current_locale.reset(token)
 
 
 bot = Robomania(

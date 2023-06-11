@@ -5,7 +5,7 @@ import logging
 import random
 from typing import TYPE_CHECKING
 
-from disnake import AllowedMentions, Locale, Localised, Member, OptionChoice
+from disnake import AllowedMentions, Localised, Member, OptionChoice
 from disnake.ext import commands
 from disnake.interactions.application_command import ApplicationCommandInteraction
 
@@ -97,7 +97,9 @@ class Poll(commands.Cog):
 
         selected_theme = emotes[theme]
         separated_options = options.split("|")
-        with self.bot.localize(inter.guild_locale or inter.locale) as tr:
+        with self.bot.localize(
+            ("COMMUNITY" in inter.guild.features and inter.guild_locale) or inter.locale
+        ) as tr:
             if len(separated_options) > len(selected_theme):
                 logger.info(
                     "Failed to create poll with selected theme, " "too many options"
@@ -128,11 +130,11 @@ class Poll(commands.Cog):
                         message_template_key = (
                             "POLL_CREATE_MESSAGE_WITH_PRONOUNS_TEMPLATE"  # noqa: E501
                         )
-                        message_arguments["created"] = self.bot.tr(t, Locale.pl)
+                        message_arguments["created"] = tr(t, "")
 
-                    message_template = self.bot.tr(message_template_key, Locale.pl)
+                    message_template = tr(message_template_key, "")
             else:
-                message_template = tr("POLL_CREATE_MESSAGE_TEMPLATE")
+                message_template = tr("POLL_CREATE_MESSAGE_TEMPLATE", "")
 
             message = message_template.format_map(message_arguments)
 
