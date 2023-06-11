@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+from contextvars import ContextVar
 from importlib import resources
 from pathlib import Path
 from typing import Generator, Protocol, cast
@@ -34,6 +35,11 @@ class Robomania(commands.Bot):
     __bot: Robomania
     __blocking_db_counter = 0
     timezone = pytz.timezone("Europe/Warsaw")
+
+    _current_locale = ContextVar(
+        "_current_locale",
+        default=disnake.enums.Locale.en_GB,
+    )
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -77,8 +83,8 @@ class Robomania(commands.Bot):
         await super().close()
 
     def get_db(self, name: str) -> Database:
-        if settings.debug:
-            name = f"{name}-dev"
+        if settings.environment:
+            name = f"{name}-{settings.environment}"
         return self.client[name]
 
     @classmethod
@@ -88,17 +94,23 @@ class Robomania(commands.Bot):
         except AttributeError:
             raise NoInstanceError("No bot instance was created.")
 
-    def tr(
-        self, key: str, locale: disnake.enums.Locale, default: str | None = None
-    ) -> str:
+    @classmethod
+    def tr(cls, key: str, default: str | None = None) -> str:
+        bot: Robomania = cls.get_bot()
+        locale = cls._current_locale.get()
+
         logger.debug(f'Get translation: {{"{locale}": "{key}"}}')
         try:
-            translations = self.i18n.get(key)
+            translations = bot.i18n.get(key)
             assert translations
-            value = translations.get(locale.value, None)
-        except (disnake.LocalizationKeyError, AttributeError):
+        except (disnake.LocalizationKeyError, AttributeError, AssertionError):
             logger.warning(f'Missing localization for key: "{key}"')
             value = None
+        else:
+            value = translations.get(locale.value, None)
+
+        if value is None and default:
+            return default
 
         if value is None:
             logger.warning(
@@ -106,19 +118,21 @@ class Robomania(commands.Bot):
             )
             value = DefaultLocale.get(key)
 
-        if value == key and default:
-            return default
-
         return value
 
+    @classmethod
     @contextlib.contextmanager
     def localize(
-        self, locale: disnake.enums.Locale
+        cls, locale: disnake.enums.Locale
     ) -> Generator[Translator, None, None]:
-        def tr(key: str, default: str | None = None) -> str:
-            return self.tr(key, locale, default)
+        if locale.value not in settings.available_locales:
+            locale = settings.default_locale
 
-        yield tr
+        token = cls._current_locale.set(locale)
+        try:
+            yield cls.tr
+        finally:
+            cls._current_locale.reset(token)
 
 
 bot = Robomania(
@@ -162,13 +176,8 @@ def configure_bot(config_path: str | Path = ".env") -> None:
 
     bot.setup()
 
-    bot.load_extension("robomania.cogs.announcements")
-    bot.load_extension("robomania.cogs.picrew")
-    bot.load_extension("robomania.cogs.dice")
-    bot.load_extension("robomania.cogs.poll")
-
-    if settings.debug:
-        bot.load_extension("robomania.cogs.tester")
+    for extension in settings.load_extensions:
+        bot.load_extension(extension)
 
 
 def main() -> None:

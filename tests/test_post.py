@@ -3,7 +3,6 @@ from __future__ import annotations
 from unittest.mock import _Call, call
 
 import pytest
-from pytest import MonkeyPatch
 from pytest_mock import MockerFixture
 
 from robomania.types import post
@@ -15,13 +14,13 @@ img = object()
 def test_process_text() -> None:
     text = "  Lorem  Ipsum... -+  abc .*abc*  "
 
-    t = post.Post(text)
+    t = post.PostOld(text)
 
     assert t.text == r"Lorem Ipsum…-+ abc.\*abc\*"
 
 
-def test_long_text_wrapping(monkeypatch: MonkeyPatch) -> None:
-    monkeypatch.setattr(post.Post.wrapper, "width", 50)
+def test_long_text_wrapping(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(post.PostOld.wrapper, "width", 50)
     monkeypatch.setattr(post, "MAX_CHARACTERS_PER_POST", 50)
 
     text = (
@@ -30,7 +29,7 @@ def test_long_text_wrapping(monkeypatch: MonkeyPatch) -> None:
         "Lorem excepteur ea ex fugiat."
     )
 
-    p = post.Post(text)
+    p = post.PostOld(text)
     assert p.wrapped_text == [
         "Sit sunt culpa duis enim occaecat anim eiusmod",
         "proident nulla. Qui labore do id anim deserunt",
@@ -42,7 +41,7 @@ def test_long_text_wrapping(monkeypatch: MonkeyPatch) -> None:
 def test_short_text_wrapping() -> None:
     text = "Duis quis consectetur sunt culpa."
 
-    p = post.Post(text)
+    p = post.PostOld(text)
 
     assert p.wrapped_text == [text]
 
@@ -54,7 +53,7 @@ async def test_get_images_images_on_input(mocker: MockerFixture) -> None:
 
     images = [image_mock] * 3
 
-    res = await post.Post._get_images(images)
+    res = await post.PostOld._get_images(images)
 
     dl.assert_not_called()
     assert res is images
@@ -68,7 +67,7 @@ async def test_get_images_links_on_input(mocker: MockerFixture) -> None:
 
     links = ["https://example.org/img.png"] * 3
 
-    res = await post.Post._get_images(links)
+    res = await post.PostOld._get_images(links)
 
     dl.assert_called_once_with(links)
     assert res is downloaded_images
@@ -76,7 +75,7 @@ async def test_get_images_links_on_input(mocker: MockerFixture) -> None:
 
 @pytest.mark.asyncio()
 async def test_prepare_images_no_images() -> None:
-    p = post.Post("")
+    p = post.PostOld("")
 
     assert (await p._prepare_images()) == (None, None)
 
@@ -85,13 +84,13 @@ async def test_prepare_images_no_images() -> None:
 async def test_prepare_images(mocker: MockerFixture) -> None:
     images = [object() for _ in range(4)]
 
-    get_images_mock = mocker.patch.object(post.Post, "_get_images")
+    get_images_mock = mocker.patch.object(post.PostOld, "_get_images")
     get_images_mock.return_value = images
 
     prepare_images_mock = mocker.patch.object(post.Image, "prepare_images")
     prepare_images_mock.return_value = iter(images)
 
-    p = post.Post("", images)
+    p = post.PostOld("", images)
     first, iterator = await p._prepare_images()
 
     get_images_mock.assert_called_once_with(images)
@@ -104,10 +103,18 @@ async def test_prepare_images(mocker: MockerFixture) -> None:
 @pytest.mark.parametrize(
     ("text", "images", "sent"),
     [
-        [["lorem ipsum"], (None, None), [call(target_channel, "lorem ipsum", None, kwargs={})]],
-        [["lorem ipsum"], (img, None), [call(target_channel, "lorem ipsum", img, kwargs={})]],
-        [[], (img, None), [call(target_channel, None, img, kwargs={})]],
-        [
+        (
+            ["lorem ipsum"],
+            (None, None),
+            [call(target_channel, "lorem ipsum", None, kwargs={})],
+        ),
+        (
+            ["lorem ipsum"],
+            (img, None),
+            [call(target_channel, "lorem ipsum", img, kwargs={})],
+        ),
+        ([], (img, None), [call(target_channel, None, img, kwargs={})]),
+        (
             [],
             (img, [img, img]),
             [
@@ -115,18 +122,24 @@ async def test_prepare_images(mocker: MockerFixture) -> None:
                 call(target_channel, None, img, kwargs={}),
                 call(target_channel, None, img, kwargs={}),
             ],
-        ],
-        [
+        ),
+        (
             ["lorem", "ipsum"],
             (img, None),
-            [call(target_channel, "lorem", kwargs={}), call(target_channel, "ipsum", img, kwargs={})],
-        ],
-        [
+            [
+                call(target_channel, "lorem", kwargs={}),
+                call(target_channel, "ipsum", img, kwargs={}),
+            ],
+        ),
+        (
             ["lorem", "ipsum"],
             (None, None),
-            [call(target_channel, "lorem", kwargs={}), call(target_channel, "ipsum", None, kwargs={})],
-        ],
-        [
+            [
+                call(target_channel, "lorem", kwargs={}),
+                call(target_channel, "ipsum", None, kwargs={}),
+            ],
+        ),
+        (
             ["lorem", "ipsum", "lorem"],
             (img, None),
             [
@@ -134,8 +147,8 @@ async def test_prepare_images(mocker: MockerFixture) -> None:
                 call(target_channel, "ipsum", kwargs={}),
                 call(target_channel, "lorem", img, kwargs={}),
             ],
-        ],
-        [
+        ),
+        (
             ["lorem", "ipsum"],
             (img, [img, img]),
             [
@@ -144,7 +157,7 @@ async def test_prepare_images(mocker: MockerFixture) -> None:
                 call(target_channel, None, img, kwargs={}),
                 call(target_channel, None, img, kwargs={}),
             ],
-        ],
+        ),
     ],
 )
 async def test_send(
@@ -152,12 +165,12 @@ async def test_send(
     images: tuple[object, list] | tuple[None, None],
     sent: list[_Call],
     mocker: MockerFixture,
-    monkeypatch: MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    target_send = mocker.patch.object(post.Post, "_send")
-    prepare_images = mocker.patch.object(post.Post, "_prepare_images")
+    target_send = mocker.patch.object(post.PostOld, "_send")
+    prepare_images = mocker.patch.object(post.PostOld, "_prepare_images")
 
-    p = post.Post("", None)
+    p = post.PostOld("", None)
 
     monkeypatch.setattr(p, "wrapped_text", text)
     prepare_images.return_value = images

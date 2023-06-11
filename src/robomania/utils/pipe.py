@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from functools import reduce
-from typing import Any, Callable
+from typing import Any, Callable, Generic, TypeVar
 
 PipeStage = Callable[[Any], Any]
+T = TypeVar("T")
 
 
-class Pipe:
+class Pipe(Generic[T]):
     pipeline: list[PipeStage]
 
     def __init__(self, *args: PipeStage) -> None:
@@ -24,9 +25,9 @@ class Pipe:
         return self
 
     def __ror__(self, func: PipeStage) -> Pipe:
-        out = Pipe(func)
+        out: Pipe[Any] = Pipe(func)
         out.pipeline.extend(self.pipeline)
         return out
 
-    def __call__(self, x: Any) -> Any:
+    def __call__(self, x: Any) -> T:
         return reduce(lambda v, func: func(v), self.pipeline, x)

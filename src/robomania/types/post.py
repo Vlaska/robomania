@@ -23,7 +23,7 @@ ImageType = TypeVar(
 )
 
 
-class Post(Generic[ImageType]):
+class PostOld(Generic[ImageType]):
     _images: list[ImageType]
     _text: str
     wrapped_text: list[str]

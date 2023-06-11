@@ -57,7 +57,6 @@ class Announcements(commands.Cog):
                 posts = await self.download_facebook_posts()
 
                 if not posts:
-                    logger.info("No new posts found")
                     return
 
                 await self.send_annoucements(posts)
@@ -91,9 +90,9 @@ class Announcements(commands.Cog):
         else:
             try:
                 raw_posts = response.json().get("data", [])
+                logger.info(f"Got {len(raw_posts)} posts")
             except Exception:
                 raw_posts = []
-        logger.info(f"Got {len(raw_posts)} posts")
 
         return [FacebookPostScraped(**x) for x in raw_posts]
 
