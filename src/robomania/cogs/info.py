@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger("robomania.cogs.info")
+ZRZUTKA_URL = "https://zrzutka.pl/6eh5d2"
 
 
 class Info(commands.Cog):
@@ -50,11 +51,11 @@ class Info(commands.Cog):
                 "title": "Zrzutka",
                 "color": 0xE83E3E,
                 "thumbnail": {"url": get_asset_url("zrzutka-icon.png", "icon")},
-                "url": "https://zrzutka.pl/6eh5d2",
+                "url": ZRZUTKA_URL,
                 "description": (
                     "Hej. Jeżeli możesz, wesprzyj Dom EQ na oficalnej zrzutce."
                 ),
-                "fields": [{"name": "Zrzutka", "value": "https://zrzutka.pl/6eh5d2"}],
+                "fields": [{"name": "Zrzutka", "value": ZRZUTKA_URL}],
             },
         )
 
@@ -97,7 +98,9 @@ class Info(commands.Cog):
             {
                 "title": "Jak dostać się do Dom EQ",
                 "description": (
-                    "Zastanawiasz się, jak dostać się do Dom EQ? Coś tam coś tam..."
+                    "DOM EQ znajduje się niedaleko Ronda Matecznego przy ul. Czyżówka 43 w "
+                    "domku jednorodzinnym. Do środka wchodzi się zieloną bramą, nie "
+                    "trzeba pukać!"
                 ),
                 "color": 0xBA41D5,
                 "fields": [
@@ -138,7 +141,7 @@ class Info(commands.Cog):
             inter,
             {
                 "title": "Fanimani",
-                "description": "Robisz zakupy? Pamiętaj o Fanimani <Placeholder>",
+                "description": "Robisz zakupy? Pamiętaj o Fanimani, dzięki któremu możemy uzyskać średnio 2,5% wartości z zakupów na DOM EQ!",
                 "color": 0xFF294E,
                 "url": "https://fanimani.pl/domeq/",
                 "fields": [
@@ -146,10 +149,6 @@ class Info(commands.Cog):
                         "name": "Federacja Znaki Równości na Fanimani",
                         "value": "https://fanimani.pl/domeq/",
                         "inline": True,
-                    },
-                    {
-                        "name": "Lista dostępnych sklepów",
-                        "value": "https://fanimani.pl/sklepy/",
                     },
                 ],
             },
@@ -174,10 +173,15 @@ class Info(commands.Cog):
                 ),
                 "color": 0x5ED2FE,
                 "fields": [
-                    {"name": "Fanimani", "value": "Fanimani"},
-                    {"name": "Patronite", "value": "Patronite"},
-                    {"name": "Zrzutka.pl", "value": "Zrzutka"},
-                    {"name": "Przelew", "value": "Przelew"},
+                    {"name": "Fanimani", "value": "https://fanimani.pl/domeq/"},
+                    {"name": "Zrzutka.pl", "value": ZRZUTKA_URL},
+                    {
+                        "name": "Przelew",
+                        "value": (
+                            "Tytuł przelewu: **Na cele statutowe**",
+                            "Nr konta bankowego: 61 1140 2004 0000 3602 7836 7437"
+                        )
+                    },
                 ],
             },
         )
@@ -209,8 +213,12 @@ class Info(commands.Cog):
                         "value": "domeq@znakirownosci.org.pl",
                     },
                     {
-                        "name": "Informacje związane z wolontariatem",
-                        "value": "wolontariat@znakirownosci.org.pl",
+                        "name": "Zespół prawny",
+                        "value": "pomoc.prawna@znakirownosci.org.pl",
+                    },
+                    {
+                        "name": "Zespół psychologiczny",
+                        "value": "wsparcie@znakirownosci.org.pl",
                     },
                 ],
             },
