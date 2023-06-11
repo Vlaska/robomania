@@ -22,6 +22,7 @@ class AnnouncementPost:
         self,
         text: str,
     ) -> str:
+        text = disnake.utils.escape_markdown(text)
         return f"{self.announcements_date}{text}{self.post_url}"
 
     @property
@@ -45,7 +46,9 @@ class AnnouncementPost:
             return
 
         text_processor = EmbedTextProcessor()
-        first_embed_text, *rest_texts = text_processor(self.subpost.text)
+        first_embed_text, *rest_texts = text_processor(
+            disnake.utils.escape_markdown(self.subpost.text)
+        )
         author = self.subpost.author
         timestamp = datetime.fromtimestamp(self.subpost.timestamp)
         images = await Image.download_images(

@@ -27,6 +27,7 @@ class Message:
     text: str
     images: list[File]
     embeds: list[Embed]
+    suppress_embeds: bool = False
 
     @property
     def has_files(self) -> bool:
@@ -51,7 +52,7 @@ class Message:
 
     @property
     def is_empty(self) -> bool:
-        return not bool(self.text and self.images and self.embeds)
+        return not bool(self.text or self.images or self.embeds)
 
     async def send(
         self,
@@ -88,6 +89,7 @@ class Message:
             self.text or None,
             embeds=self.embeds if not separate_embeds else [],
             files=self.images,
+            suppress_embeds=self.suppress_embeds,
         )
         if separate_embeds:
             await send(embeds=self.embeds)
@@ -109,7 +111,6 @@ class TextProcessor(TextProcessorProtocol):
         | partial(space_regex.sub, " ")
         | partial(space_before_punctuation.sub, "")
         | partial(three_dots.sub, "…")
-        | disnake.utils.escape_markdown
     )
 
     @classmethod
@@ -145,15 +146,15 @@ class MessageBuilder:
         *split_text, last_text = self.process_text(text)
 
         for i in split_text:
-            self.add_text(i).new_message()
+            self.add_text(i).suppress_embed(True).new_message()
 
-        self.add_text(last_text)
+        self.add_text(last_text).suppress_embed(True)
 
         if images:
             image_batcher = Image.prepare_images(images)
 
             for i in image_batcher:
-                self.add_images(i).new_message()
+                self.add_images(i).suppress_embed(True).new_message()
 
         return self
 
@@ -205,3 +206,7 @@ class MessageBuilder:
     ) -> None:
         for i in self.messages:
             await i.send(message_target)
+
+    def suppress_embed(self, value: bool) -> Self:
+        self.current_message.suppress_embeds = value
+        return self
