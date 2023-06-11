@@ -3,9 +3,17 @@ from __future__ import annotations
 import logging
 from typing import TypeAlias
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 logger = logging.getLogger("robomania.types")
+
+
+class FacebookSubpost(BaseModel, extra=Extra.allow):
+    text: str
+    images: list[dict]
+    author: str
+    timestamp: int
+    publish_date: str
 
 
 class FacebookPostScraped(BaseModel):
@@ -17,6 +25,7 @@ class FacebookPostScraped(BaseModel):
     url: str
     text: str
     was_posted: bool
+    subpost: FacebookSubpost | None = None
 
 
 FacebookPosts: TypeAlias = list[FacebookPostScraped]
