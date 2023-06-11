@@ -13,7 +13,7 @@ from disnake.interactions.application_command import ApplicationCommandInteracti
 from robomania import config
 from robomania.bot import Robomania
 from robomania.models.picrew_model import PicrewModel
-from robomania.types.post import Post
+from robomania.types.post import PostOld
 from robomania.utils.exceptions import DuplicateError
 
 logger = logging.getLogger("robomania.cogs.picrew")
@@ -21,7 +21,7 @@ logger = logging.getLogger("robomania.cogs.picrew")
 
 class PicrewPost:
     picrew_info: PicrewModel
-    post: Post
+    post: PostOld
     mentions = AllowedMentions(users=False)
 
     def __init__(self, info: PicrewModel) -> None:
@@ -42,7 +42,7 @@ class PicrewPost:
             f"{user_mention}"
         )
 
-        self.post = Post(post_text)
+        self.post = PostOld(post_text)
 
     async def send(self, channel: disnake.TextChannel) -> None:
         await self.post.send(channel, allowed_mentions=self.mentions)

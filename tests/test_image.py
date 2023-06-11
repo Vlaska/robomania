@@ -6,7 +6,6 @@ from typing import cast
 import PIL
 import pytest
 from faker import Faker
-from pytest import MonkeyPatch
 from pytest_httpserver import HTTPServer
 from pytest_mock import MockerFixture
 
@@ -66,16 +65,19 @@ def test_change_image_format_changes_format_in_name(img: image.Image) -> None:
 @pytest.mark.parametrize(
     ("sizes", "result"),
     [
-        [[1024, 6000], [2]],
-        [[[1024 * 9, 512]], [1]],
-        [[[1024 * 9, 8000], 512], [1, 1]],
-        [[100] * 12, [10, 2]],
-        [[8000, 10, 500], [2, 1]],
-        [[500, 7800, 200], [1, 2]],
+        ([1024, 6000], [2]),
+        ([[1024 * 9, 512]], [1]),
+        ([[1024 * 9, 8000], 512], [1, 1]),
+        ([100] * 12, [10, 2]),
+        ([8000, 10, 500], [2, 1]),
+        ([500, 7800, 200], [1, 2]),
     ],
 )
 def test_prepare_images(
-    sizes: list[int | list[int]], result: list[int], mocker: MockerFixture, monkeypatch: MonkeyPatch
+    sizes: list[int | list[int]],
+    result: list[int],
+    mocker: MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(image, "MAX_TOTAL_SIZE_OF_IMAGES", 8 * 1024)
     bytesio_mock = mocker.Mock(spec=io.BytesIO)
@@ -135,11 +137,13 @@ def test_reduce_size(faker: Faker, mocker: MockerFixture) -> None:
 
 def test_reduce_size_cannot_reduce_enough(mocker: MockerFixture) -> None:
     img_raw = mocker.Mock(io.BytesIO)
-    mocker.patch.object(image.Image, "size", new_callable=mocker.PropertyMock(return_value=10000))
+    mocker.patch.object(
+        image.Image, "size", new_callable=mocker.PropertyMock(return_value=10000)
+    )
     mocker.patch.object(image.Image, "_reduce_image_resolution")
     mocker.patch.object(image.Image, "_change_image_format")
 
     img = image.Image(img_raw, "test.png")
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="below given size"):
         img.reduce_size(100)

@@ -96,17 +96,18 @@ class Robomania(commands.Bot):
 
     @classmethod
     def tr(cls, key: str, default: str | None = None) -> str:
-        bot = cls.get_bot()
+        bot: Robomania = cls.get_bot()
         locale = cls._current_locale.get()
 
         logger.debug(f'Get translation: {{"{locale}": "{key}"}}')
         try:
             translations = bot.i18n.get(key)
             assert translations
-            value = translations.get(locale.value, None)
-        except (disnake.LocalizationKeyError, AttributeError):
+        except (disnake.LocalizationKeyError, AttributeError, AssertionError):
             logger.warning(f'Missing localization for key: "{key}"')
             value = None
+        else:
+            value = translations.get(locale.value, None)
 
         if value is None and default:
             return default
@@ -124,6 +125,9 @@ class Robomania(commands.Bot):
     def localize(
         cls, locale: disnake.enums.Locale
     ) -> Generator[Translator, None, None]:
+        if locale.value not in settings.available_locales:
+            locale = settings.default_locale
+
         token = cls._current_locale.set(locale)
         try:
             yield cls.tr

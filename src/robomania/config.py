@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import disnake
 from pydantic import (
     AnyHttpUrl,
     BaseSettings,
@@ -78,6 +79,14 @@ class Settings(BasicSettings):
         "robomania.cogs.dice",
         "robomania.cogs.poll",
         "robomania.cogs.info",
+    )
+
+    default_locale = disnake.Locale.en_GB
+
+    available_locales: tuple[str, ...] = (
+        "pl",
+        "en_GB",
+        "en_US",
     )
 
     class Config:
