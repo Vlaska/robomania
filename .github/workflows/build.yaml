@@ -53,5 +53,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           platforms: linux/arm64,linux/amd64
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/robomania:buildcache-${GITHUB_REF##*/}
-          cache-to: type=registry,mode=max,ref=${{ secrets.DOCKER_USERNAME }}/robomania:buildcache-${GITHUB_REF##*/}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/robomania:buildcache
+          cache-to: type=registry,mode=max,ref=${{ secrets.DOCKER_USERNAME }}/robomania:buildcache
