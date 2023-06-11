@@ -38,7 +38,7 @@ class Info(commands.Cog):
 
     @info.sub_command()
     async def fundraiser(self, inter: ApplicationCommandInteraction) -> None:
-        """Display info regarding fundraiser supporting Dom EQ  {{ INFO_FUNDRAISER }}
+        """Display info regarding fundraiser supporting DOM EQ  {{ INFO_FUNDRAISER }}
 
         Parameters
         ----------
@@ -53,7 +53,7 @@ class Info(commands.Cog):
                 "thumbnail": {"url": get_asset_url("zrzutka-icon.png", "icon")},
                 "url": ZRZUTKA_URL,
                 "description": (
-                    "Hej. Jeżeli możesz, wesprzyj Dom EQ na oficalnej zrzutce."
+                    "Hej. Jeżeli możesz, wesprzyj DOM EQ na oficalnej zrzutce."
                 ),
                 "fields": [{"name": "Zrzutka", "value": ZRZUTKA_URL}],
             },
@@ -85,7 +85,7 @@ class Info(commands.Cog):
 
     @info.sub_command()
     async def address(self, inter: ApplicationCommandInteraction) -> None:
-        """Display address of Dom EQ and how to get there with public transport  \
+        """Display address of DOM EQ and how to get there with public transport  \
         {{ DOMEQ_ADDRESS }}
 
         Parameters
@@ -96,11 +96,11 @@ class Info(commands.Cog):
         await self.send_embed(
             inter,
             {
-                "title": "Jak dostać się do Dom EQ",
+                "title": "Jak dostać się do DOM EQ",
                 "description": (
-                    "DOM EQ znajduje się niedaleko Ronda Matecznego przy ul. Czyżówka 43 w "
-                    "domku jednorodzinnym. Do środka wchodzi się zieloną bramą, nie "
-                    "trzeba pukać!"
+                    "DOM EQ znajduje się niedaleko Ronda Matecznego przy ul. Czyżówka "
+                    "43 w domku jednorodzinnym. Do środka wchodzi się zieloną bramą, "
+                    "nie trzeba pukać!"
                 ),
                 "color": 0xBA41D5,
                 "fields": [
@@ -117,7 +117,7 @@ class Info(commands.Cog):
                     {
                         "name": "Komunikacja miejska",
                         "value": (
-                            "Do Dom EQ można łatwo dostać się komunikacją miejską. "
+                            "Do DOM EQ można łatwo dostać się komunikacją miejską. "
                             "Wystarczy złapać coś, co jedzie na Rondo Matecznego.\n"
                             "Autobusy: 144, 164, 169, 173, 179, 301, 304, "
                             "469, 503, 608, 610\n"
@@ -130,7 +130,7 @@ class Info(commands.Cog):
 
     @info.sub_command()
     async def fanimani(self, inter: ApplicationCommandInteraction) -> None:
-        """Display link to Fanimani, with which you can support Dom EQ  {{ FANIMANI }}
+        """Display link to Fanimani, with which you can support DOM EQ  {{ FANIMANI }}
 
         Parameters
         ----------
@@ -141,7 +141,10 @@ class Info(commands.Cog):
             inter,
             {
                 "title": "Fanimani",
-                "description": "Robisz zakupy? Pamiętaj o Fanimani, dzięki któremu możemy uzyskać średnio 2,5% wartości z zakupów na DOM EQ!",
+                "description": (
+                    "Robisz zakupy? Pamiętaj o Fanimani, dzięki któremu "
+                    "możemy uzyskać średnio 2,5% wartości z zakupów na DOM EQ!"
+                ),
                 "color": 0xFF294E,
                 "url": "https://fanimani.pl/domeq/",
                 "fields": [
@@ -178,9 +181,9 @@ class Info(commands.Cog):
                     {
                         "name": "Przelew",
                         "value": (
-                            "Tytuł przelewu: **Na cele statutowe**",
+                            "Tytuł przelewu: **Na cele statutowe**"
                             "Nr konta bankowego: 61 1140 2004 0000 3602 7836 7437"
-                        )
+                        ),
                     },
                 ],
             },
@@ -199,9 +202,7 @@ class Info(commands.Cog):
             inter,
             {
                 "title": "Kontakt",
-                "description": (
-                    "Chesz się z nami skontaktować? Oto jak możesz to zrobić:"
-                ),
+                "description": "Chesz się z nami skontaktować?",
                 "color": 0xC4FF39,
                 "fields": [
                     {
