@@ -14,7 +14,7 @@ from robomania.utils import rewindable_buffer
 
 logger = logging.getLogger("robomania.types")
 MAX_IMAGES_PER_MESSAGE = 10
-MAX_TOTAL_SIZE_OF_IMAGES = 8 * 1024 * 1024
+MAX_TOTAL_SIZE_OF_IMAGES = 25 * 1024 * 1024
 
 
 class Image:
@@ -69,6 +69,7 @@ class Image:
     @staticmethod
     def prepare_images(
         images: list[Image],
+        max_image_count_per_message: int = MAX_IMAGES_PER_MESSAGE,
     ) -> Generator[list[disnake.File], None, None]:
         current_image_group: list[disnake.File] = []
         current_total_size = 0
@@ -86,7 +87,7 @@ class Image:
                         continue
 
                 if (
-                    len(current_image_group) + 1 > MAX_IMAGES_PER_MESSAGE
+                    len(current_image_group) + 1 > max_image_count_per_message
                     or image.size + current_total_size > MAX_TOTAL_SIZE_OF_IMAGES
                 ):
                     yield current_image_group
