@@ -16,7 +16,7 @@ MAX_CHARACTERS_PER_POST = 2000
 MAX_CHARACTERS_FOR_EMBED = 4096
 
 space_regex = re.compile(" +")
-space_before_punctuation = re.compile(" (?=[.,?!–—-])")
+space_before_punctuation = re.compile(" (?=[.,?!-—-])")
 three_dots = re.compile("\\.{3}")
 
 
@@ -41,7 +41,6 @@ class Message:
     ) -> None:
         self.text = text
         # if images and embeds and any(self.does_embed_have_files(i) for i in embeds):
-        #     raise ValueError("Cannot pass both images and embeds with files to send.")
 
         self.images = [i.file for i in (images or [])]
         self.embeds = embeds or []

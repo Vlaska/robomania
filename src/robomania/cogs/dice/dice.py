@@ -4,7 +4,7 @@ import enum
 import operator
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Any, Callable, TypeAlias
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 import numpy as np
 
@@ -17,12 +17,15 @@ from robomania.cogs.dice.mods import (
 )
 from robomania.cogs.dice.roll_result import RollResult
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 
 class ModEnum(str, enum.Enum):
     priority: int
     # `Any` shouldn't be as first argument, but mypy thinks it's a method,
     # and complains about number of arguments
-    func: Callable[["DiceExpression", int | None], RollResult]
+    func: Callable[[DiceExpression, int | None], RollResult]
 
     EXPLODE = ("!", 0, mod_explode)
     KEEP_HIGH = ("kh", 10, mod_keep_high)
@@ -34,7 +37,7 @@ class ModEnum(str, enum.Enum):
         cls,
         value: str,
         priority: int,
-        func: Callable[["DiceExpression", int | None], RollResult],
+        func: Callable[[DiceExpression, int | None], RollResult],
     ) -> ModEnum:
         obj = str.__new__(cls, [value])
         obj._value_ = value

@@ -3,13 +3,13 @@ from __future__ import annotations
 import warnings
 from dataclasses import dataclass
 from logging import getLogger
-from typing import Generic, TypeVar, Union, cast, overload
+from typing import Generic, TypeVar, cast, overload
 
 import numpy as np
 
 from robomania.utils.exceptions import DivByZeroWarning
 
-T = TypeVar("T", bound=Union[int, list])
+T = TypeVar("T", bound=int | list)
 logger = getLogger("robomania.cogs.dice")
 
 
@@ -131,7 +131,7 @@ class RollResult(Generic[T]):
         pass
 
     def __radd__(self, other):
-        if isinstance(other, (int, list)):
+        if isinstance(other, int | list):
             return RollResult(other) + self
 
         raise ValueError(

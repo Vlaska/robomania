@@ -54,11 +54,10 @@ class HealthcheckClient:
                 web.get("/healthcheck", client.healthcheck),
             ]
         )
-        # web.run_app(app, host='localhost', port=6302)
         runner = web.AppRunner(app)
         await runner.setup()
         client.runner = runner
-        site = web.TCPSite(runner, "0.0.0.0", 6302)
+        site = web.TCPSite(runner, "127.0.0.1", 6302)
         await site.start()
 
         logger.info("Started healthcheck server")

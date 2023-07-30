@@ -4,8 +4,7 @@ import contextlib
 import logging
 from contextvars import ContextVar
 from importlib import resources
-from pathlib import Path
-from typing import Generator, Protocol, cast
+from typing import TYPE_CHECKING, Protocol, cast
 
 import disnake
 import pytz
@@ -17,6 +16,10 @@ from robomania.config import Settings, settings
 from robomania.locale import DefaultLocale
 from robomania.utils.exceptions import NoInstanceError
 from robomania.utils.healthcheck import HealthcheckClient
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+    from pathlib import Path
 
 intents = disnake.Intents.default()
 intents.typing = False

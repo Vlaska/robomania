@@ -3,17 +3,20 @@ from __future__ import annotations
 import re
 from functools import partial
 from textwrap import TextWrapper
-from typing import Any, Generator, Generic, Iterable, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 import disnake
 
 from robomania.types.image import Image
 from robomania.utils.pipe import Pipe
 
+if TYPE_CHECKING:
+    from collections.abc import Generator, Iterable
+
 MAX_CHARACTERS_PER_POST = 2000
 
 space_regex = re.compile(" +")
-space_before_punctuation = re.compile(" (?=[.,?!–—-])")
+space_before_punctuation = re.compile(" (?=[.,?!–—-])")  # noqa: RUF001
 three_dots = re.compile("\\.{3}")
 
 ImageType = TypeVar(
@@ -72,9 +75,11 @@ class PostOld(Generic[ImageType]):
         text: str | None = None,
         images: list[disnake.File] | None = None,
         /,
-        kwargs: dict[str, Any] = {},
+        kwargs: dict[str, Any] | None = None,
     ) -> None:
-        await channel.send(text, files=cast(list[disnake.File], images), **kwargs)
+        await channel.send(
+            text, files=cast(list[disnake.File], images), **(kwargs or {})
+        )
 
     @staticmethod
     async def _get_images(images: list[ImageType]) -> list[Image]:
@@ -98,7 +103,7 @@ class PostOld(Generic[ImageType]):
 
         return first_images, images_to_send
 
-    async def send(self, target: disnake.TextChannel, **kwargs) -> None:
+    async def send(self, target: disnake.TextChannel, **kwargs: dict[str, Any]) -> None:
         i: object
 
         text_to_send = self.wrapped_text.copy()

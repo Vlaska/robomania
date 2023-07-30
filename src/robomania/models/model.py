@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Any, Protocol, Type, TypeVar, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar, runtime_checkable
 
 if TYPE_CHECKING:
     from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -18,7 +18,7 @@ class Model(Protocol):
 
     @classmethod
     @abstractmethod
-    def from_raw(cls: Type[TModel], data: dict[str, Any]) -> TModel:
+    def from_raw(cls: type[TModel], data: dict[str, Any]) -> TModel:
         raise NotImplementedError
 
     @abstractmethod

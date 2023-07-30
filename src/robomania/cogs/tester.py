@@ -1,25 +1,26 @@
 from __future__ import annotations
 
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from disnake import Embed
 from disnake.ext import commands
-from disnake.interactions.application_command import ApplicationCommandInteraction
 
-from robomania.bot import Robomania
 from robomania.utils.types import GuildMessageable
+
+if TYPE_CHECKING:
+    from disnake.interactions.application_command import ApplicationCommandInteraction
+
+    from robomania.bot import Robomania
 
 # @bot.event
 # async def on_message(message):
 #     if message.author == bot.user:
-#         return
 
 #     if message.content.startswith('>hello'):
-#         await message.channel.send('Hello!')
 
 
 class Tester(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: Robomania) -> None:
         self.bot = bot
 
     @commands.command(name="world")

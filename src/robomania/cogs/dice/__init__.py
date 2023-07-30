@@ -5,7 +5,9 @@ import warnings
 from typing import TYPE_CHECKING
 
 from disnake.ext import commands
-from disnake.interactions.application_command import ApplicationCommandInteraction
+from disnake.interactions.application_command import (  # noqa: TCH002
+    ApplicationCommandInteraction,
+)
 
 from robomania.cogs.dice.grammar import parse
 from robomania.utils.exceptions import DivByZeroWarning
@@ -76,7 +78,7 @@ class Dice(commands.Cog):
                 message = "\n".join(
                     f"`{dice}` -> `{result.finalize()}`"
                     for dice, result in zip(
-                        parsed_dice.expressions, evaluated_expression
+                        parsed_dice.expressions, evaluated_expression, strict=False
                     )
                 )
                 if len(message) >= 1500:

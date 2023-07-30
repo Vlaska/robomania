@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 import disnake
 
 from robomania import config
-from robomania.models.facebook_post import FacebookPostScraped
 from robomania.types.image import Image
 from robomania.types.message import EmbedTextProcessor, MessageBuilder
+
+if TYPE_CHECKING:
+    from robomania.models.facebook_post import FacebookPostScraped
 
 logger = logging.getLogger("robomania.types")
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import disnake
 from pydantic import (
@@ -13,6 +13,9 @@ from pydantic import (
     field_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class BasicSettings(BaseSettings):

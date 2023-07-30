@@ -1,6 +1,10 @@
+# ruff: noqa: ANN001
+
 from __future__ import annotations
 
-from arpeggio import PTNodeVisitor, visit_parse_tree
+from typing import Any, Never, assert_never, cast
+
+from arpeggio import NonTerminal, PTNodeVisitor, Terminal, visit_parse_tree
 from arpeggio.cleanpeg import ParserPEG
 
 from robomania.cogs.dice.dice import (
@@ -44,7 +48,7 @@ grammar_parser = ParserPEG(grammar, "roll")
 
 
 class DiceVisitor(PTNodeVisitor):
-    def visit_number(self, node, children) -> int:
+    def visit_number(self, node: Terminal, children: Any) -> int:
         return int(node.value)
 
     def visit_dice(self, node, children: list[int]) -> Dice:
@@ -56,14 +60,14 @@ class DiceVisitor(PTNodeVisitor):
 
         return Dice(base=base, num_of_dice=multiplyer)
 
-    def visit_keep_discard(self, node, children) -> ModEnum:
+    def visit_keep_discard(self, node, children: list[str]) -> ModEnum:
         match children[0]:
             case "d" | "dl":
                 return ModEnum.DISCARD_LOW
             case "k" | "kh":
                 return ModEnum.KEEP_HIGH
             case _:
-                raise ValueError("WTF?", "WTF?")
+                assert_never(cast(Never, children[0]))
 
     def visit_sum(self, node, children) -> ModEnum:
         return ModEnum.SUM
@@ -77,10 +81,7 @@ class DiceVisitor(PTNodeVisitor):
     def visit_mod(self, node, children) -> Mod:
         mod = children[0]
 
-        if len(children) == 2:
-            argument = children[1]
-        else:
-            argument = None
+        argument = children[1] if len(children) == 2 else None
 
         return Mod(mod, argument)
 
@@ -134,5 +135,5 @@ class DiceVisitor(PTNodeVisitor):
 
 
 def parse(dice: str) -> Roll:
-    tree = grammar_parser.parse(dice)
+    tree: NonTerminal = grammar_parser.parse(dice)
     return visit_parse_tree(tree, DiceVisitor())

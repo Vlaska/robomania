@@ -2,19 +2,21 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import disnake
 import validators
 from disnake import AllowedMentions, Locale
 from disnake.ext import commands, tasks
-from disnake.interactions.application_command import ApplicationCommandInteraction
 
 from robomania import config
 from robomania.bot import Robomania
 from robomania.models.picrew_model import PicrewModel
 from robomania.types.post import PostOld
 from robomania.utils.exceptions import DuplicateError
+
+if TYPE_CHECKING:
+    from disnake.interactions.application_command import ApplicationCommandInteraction
 
 logger = logging.getLogger("robomania.cogs.picrew")
 

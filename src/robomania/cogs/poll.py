@@ -7,10 +7,10 @@ from typing import TYPE_CHECKING
 
 from disnake import AllowedMentions, Localised, Member, OptionChoice
 from disnake.ext import commands
-from disnake.interactions.application_command import ApplicationCommandInteraction
 
 if TYPE_CHECKING:
     from disnake import Role
+    from disnake.interactions.application_command import ApplicationCommandInteraction
 
     from robomania.bot import Robomania
 
@@ -54,7 +54,7 @@ emotes = {
 
 
 class Poll(commands.Cog):
-    def __init__(self, bot: Robomania):
+    def __init__(self, bot: Robomania) -> None:
         self.bot = bot
 
     @commands.slash_command()
@@ -103,7 +103,7 @@ class Poll(commands.Cog):
         ) as tr:
             if len(separated_options) > len(selected_theme):
                 logger.info(
-                    "Failed to create poll with selected theme, " "too many options"
+                    "Failed to create poll with selected theme, too many options"
                 )
                 await inter.send(
                     tr("POLL_TOO_MANY_OPTIONS").format(
@@ -116,10 +116,7 @@ class Poll(commands.Cog):
             message_arguments = {"user": inter.user.mention, "question": question}
 
             if inter.guild_id == 688337005402128386:
-                if isinstance(inter.user, Member):
-                    user_roles = inter.user.roles
-                else:
-                    user_roles = []
+                user_roles = inter.user.roles if isinstance(inter.user, Member) else []
                 roles_in_domeq = list(DomeqPronounsRoles)
                 pronouns: list[Role] = [i for i in user_roles if i.id in roles_in_domeq]
                 if pronouns:
@@ -129,7 +126,7 @@ class Poll(commands.Cog):
                         message_template_key = "POLL_CREATE_MESSAGE_TEMPLATE"
                     else:
                         message_template_key = (
-                            "POLL_CREATE_MESSAGE_WITH_PRONOUNS_TEMPLATE"  # noqa: E501
+                            "POLL_CREATE_MESSAGE_WITH_PRONOUNS_TEMPLATE"
                         )
                         message_arguments["created"] = tr(t, "")
 

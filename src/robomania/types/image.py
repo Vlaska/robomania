@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import logging
 from pathlib import Path
-from typing import Generator
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 import aiohttp
@@ -11,6 +11,9 @@ import disnake
 from PIL import Image as PILImage
 
 from robomania.utils import rewindable_buffer
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 logger = logging.getLogger("robomania.types")
 MAX_IMAGES_PER_MESSAGE = 10

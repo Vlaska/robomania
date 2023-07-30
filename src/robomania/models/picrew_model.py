@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime
-from typing import TYPE_CHECKING, Any, Awaitable, Coroutine, Mapping, Protocol, cast
+from collections.abc import Awaitable, Coroutine, Mapping
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import disnake
 from attrs import asdict, define, field
-from bson import ObjectId
 from pymongo.errors import WriteError
 
 from robomania.bot import Robomania
@@ -13,6 +12,9 @@ from robomania.models.model import Model
 from robomania.utils.exceptions import DuplicateError
 
 if TYPE_CHECKING:
+    from datetime import datetime
+
+    from bson import ObjectId
     from motor.motor_asyncio import AsyncIOMotorDatabase
     from pymongo.database import Database
     from pymongo.results import InsertOneResult

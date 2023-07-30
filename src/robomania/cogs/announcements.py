@@ -2,17 +2,20 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import disnake
 import httpx
 from disnake.ext import commands, tasks
-from disnake.interactions.application_command import ApplicationCommandInteraction
 
 from robomania import config
-from robomania.bot import Robomania
 from robomania.models.facebook_post import FacebookPosts, FacebookPostScraped
 from robomania.types.announcement_post import AnnouncementPost
+
+if TYPE_CHECKING:
+    from disnake.interactions.application_command import ApplicationCommandInteraction
+
+    from robomania.bot import Robomania
 
 logger = logging.getLogger("robomania.cogs.announcements")
 
@@ -21,7 +24,7 @@ class Announcements(commands.Cog):
     target_channel: disnake.TextChannel
     _DISABLE_ANNOUNCEMENTS_LOOP = False
 
-    def __init__(self, bot: Robomania):
+    def __init__(self, bot: Robomania) -> None:
         self.bot = bot
         self.check_lock = asyncio.Lock()
 

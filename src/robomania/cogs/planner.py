@@ -1,11 +1,14 @@
 # type: ignore
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytesseract as tes
 from disnake.ext import commands
 from PIL import Image, ImageDraw, ImageOps
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 THRESHOLD = 1
 
@@ -38,5 +41,5 @@ class Planner:
 
 
 class PlannerCog(commands.Cog, Planner):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot

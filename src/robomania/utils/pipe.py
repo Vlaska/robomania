@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from functools import reduce
-from typing import Any, Callable, Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 PipeStage = Callable[[Any], Any]
 T = TypeVar("T")

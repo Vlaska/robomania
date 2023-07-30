@@ -2,22 +2,25 @@ from __future__ import annotations
 
 import json
 import logging
+from typing import TYPE_CHECKING
 
 from disnake import Embed
 from disnake.ext import commands
-from disnake.interactions.application_command import ApplicationCommandInteraction
-from disnake.types.embed import Embed as EmbedData
 
 from robomania.bot import Robomania
 from robomania.config import settings
 from robomania.utils.assets import get_asset_url
+
+if TYPE_CHECKING:
+    from disnake.interactions.application_command import ApplicationCommandInteraction
+    from disnake.types.embed import Embed as EmbedData
 
 logger = logging.getLogger("robomania.cogs.info")
 ZRZUTKA_URL = "https://zrzutka.pl/6eh5d2"
 
 
 class Info(commands.Cog):
-    def __init__(self, bot: Robomania):
+    def __init__(self, bot: Robomania) -> None:
         self.bot = bot
 
     @commands.slash_command()

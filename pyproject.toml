@@ -68,7 +68,6 @@ plugins = [
   "pydantic.mypy",
   "numpy.typing.mypy_plugin"
 ]
-ignore_missing_imports_per_module = true
 
 [tool.black]
 line-length = 88
@@ -78,16 +77,42 @@ target-version = ["py311"]
 profile = "black"
 
 [tool.ruff]
+# https://beta.ruff.rs/docs/rules/
 select = [
-  "E",
-  "F",
-  "C4",
-  "PT",
-  "PLC",
-  "PLE",
-  "PLR",
-  "PLW",
-  "C90"
+  "E",        # pycodestyle (errorss)
+  "F",        # pyflakes
+  "C4",       # flake8-comprehensions
+  "PT",       # flake8-pytest
+  "C90",      # mccabe
+  "N",        # pep8-naming
+  "UP",       # pyupgrade
+  "ANN",      # flake8-annotations
+  "ASYNC",    # flake8-async
+  "S",        # flake8-bandit
+  "BLE",      # flake8-blind-except
+  "B",        # flake8-bugbear
+  "A",        # flake8-builtins
+  "COM",      # flake8-commas
+  "FA",       # flake8-future-annotations
+  "ISC",      # flake8-implicit-str-concat
+  "ICN",      # flake8-import-conventions
+  "G",        # flake8-logging-format
+  "INP",      # flake8-no-pep420
+  "PIE",      # flake8-pie
+  "T20",      # flake8-print
+  "PYI",      # flake8-pyi
+  "Q",        # flake8-quotes
+  "RSE",      # flake8-raise
+  "RET",      # flake8-return
+  "SIM",      # flake8-simplify
+  "TID",      # flake8-tidy-imports
+  "TCH",      # flake8-type-checking
+  "PTH",      # flake8-use-pathlib
+  "ERA",      # eradicate
+  "PL",       # pylint
+  "TRY",      # tryceratops
+  "PERF",     # perflint
+  "RUF",      # ruff
 ]
 exclude = [
   ".bzr",
@@ -113,7 +138,27 @@ exclude = [
 ]
 line-length = 88
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
-ignore=["PLR2004"]
+ignore=[
+  "G004",     # Logging statement uses f-string
+  "ANN101",   # Missing type annotation for {name} in method
+  "ANN102",   # Missing type annotation for {name} in classmethod
+  "COM812",   # Trailing comma missing
+]
+
+[tool.ruff.flake8-bugbear]
+# Allow default arguments like, e.g., `data: List[str] = fastapi.Query(None)`.
+extend-immutable-calls = [
+  "fastapi.Depends",
+  "fastapi.Query",
+  "fastapi.Header",
+  "fastapi.Path",
+]
+
+[tool.ruff.flake8-builtins]
+builtins-ignorelist = [
+  "id",
+  "eval",
+]
 
 [tool.coverage.run]
 source = ["src/robomania"]

@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import logging
+
 import click
 import requests
 
 from robomania.bot import configure_bot, main
 from robomania.utils.constants import HEALTHCHECK_GOOD_STATUS_CODE
+
+logger = logging.getLogger("robomania.healthcheck")
 
 
 @click.group(invoke_without_command=True)
@@ -26,9 +30,9 @@ def setup_database() -> None:
 @cli.command()
 def healthcheck() -> int:
     try:
-        response = requests.get("http://localhost:6302/healthcheck")
-    except Exception as e:
-        print(e)
+        response = requests.get("http://localhost:6302/healthcheck", timeout=1000)
+    except Exception:
+        logger.exception("Healthcheck failed")
         return 1
 
     if response.status_code == HEALTHCHECK_GOOD_STATUS_CODE:
