@@ -22,7 +22,7 @@ class Image:
     image: io.BytesIO
     DOWNSAMPLE_IMAGE_RESOLUTION_BY = [3 / 4, 1 / 2, 1 / 4, 1 / 8, 1 / 16]
 
-    def __init__(self, data: io.BytesIO, name: str) -> None:
+    def __init__(self, data: io.BytesIO, name: str | None) -> None:
         self._data = data
         self.name = name
         self.image = data
@@ -33,6 +33,8 @@ class Image:
         with rewindable_buffer(self._data, self.image) as (data, image):
             img = PILImage.open(data)
             img.convert("RGB").save(image, "jpeg")
+            if self.name:
+                self.name = str(Path(self.name).with_suffix(".jpg"))
 
     def _reduce_image_resolution(self, factor: float) -> None:
         self.image = io.BytesIO()

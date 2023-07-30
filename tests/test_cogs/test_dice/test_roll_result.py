@@ -25,7 +25,9 @@ def gen_params(results: list) -> list:
     return [(i[0], i[1], j) for i, j in zip(base_params, results)]
 
 
-addition_params = gen_params([3, 6, 3, 6, 6, [1, 2, 3, 4, 5, 6], 10, [1, 2, 3, 4, 5, 6]])
+addition_params = gen_params(
+    [3, 6, 3, 6, 6, [1, 2, 3, 4, 5, 6], 10, [1, 2, 3, 4, 5, 6]]
+)
 
 right_addition_params = gen_params(
     [
@@ -124,6 +126,7 @@ def test_right_div(left, right, result) -> None:
         (RollResult([0]), does_not_raise()),
     ],
 )
+@pytest.mark.filterwarnings("ignore")
 def test_div_by_zero(right, raises) -> None:
     with raises:
         assert (RollResult(10) / right).value == 10
@@ -137,6 +140,7 @@ def test_div_by_zero(right, raises) -> None:
         ([-1, 2], does_not_raise()),
     ],
 )
+@pytest.mark.filterwarnings("ignore")
 def test_right_div_by_zero(right, raises) -> None:
     with raises:
         assert (10 / RollResult(right)).value == 10
@@ -197,7 +201,7 @@ def test_protected_sum(value, result) -> None:
 def test_neg() -> None:
     assert -RollResult(5).value == -5
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="negate"):
         -RollResult([5])
 
 
@@ -206,7 +210,7 @@ def test_concat() -> None:
     other = [4, 5, 6]
     result = [1, 2, 3, 4, 5, 6]
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="concat"):
         RollResult(5)._RollResult__concat(other)
 
     assert value._RollResult__concat(other) == result
@@ -225,4 +229,7 @@ def test_concat() -> None:
 )
 def test_transform_other_to_int(value, raises, result) -> None:
     with raises:
-        assert RollResult._RollResult__transform_other_to_int(value, "Custom message") == result
+        assert (
+            RollResult._RollResult__transform_other_to_int(value, "Custom message")
+            == result
+        )

@@ -78,6 +78,11 @@ def test_double_explode() -> None:
     ]
 
 
+def test_explode_dice_with_base_1() -> None:
+    with pytest.raises(ValueError, match="base 1"):
+        parse("1d1!").eval().finalize()
+
+
 def test_explode_sequence() -> None:
     with pytest.raises(ValueError, match="Cannot explode a group."):
         parse("{1, 2}!").eval()

@@ -21,10 +21,13 @@ class TestPicrewCountByPostStatus:
     @pytest.mark.parametrize(
         ("documents", "result"),
         [
-            [[], PicrewCountByPostStatus(0, 0)],
-            [[{"posted": True, "count": 20}], PicrewCountByPostStatus(20, 0)],
-            [[{"posted": False, "count": 20}], PicrewCountByPostStatus(0, 20)],
-            [[{"posted": True, "count": 10}, {"posted": False, "count": 5}], PicrewCountByPostStatus(10, 5)],
+            ([], PicrewCountByPostStatus(0, 0)),
+            ([{"posted": True, "count": 20}], PicrewCountByPostStatus(20, 0)),
+            ([{"posted": False, "count": 20}], PicrewCountByPostStatus(0, 20)),
+            (
+                [{"posted": True, "count": 10}, {"posted": False, "count": 5}],
+                PicrewCountByPostStatus(10, 5),
+            ),
         ],
     )
     def test_from_mongo_documents(self, documents, result) -> None:
@@ -74,7 +77,9 @@ class TestPicrewModel:
     def create(faker: Faker, was_posted: bool, user) -> PicrewModel:
         date = faker.date_time()
 
-        return PicrewModel(user, faker.url(), date, was_posted, ObjectId.from_datetime(date))
+        return PicrewModel(
+            user, faker.url(), date, was_posted, ObjectId.from_datetime(date)
+        )
 
     def test_to_dict(self, user, raw_model: dict) -> None:
         model = PicrewModel(
@@ -115,7 +120,9 @@ class TestPicrewModel:
         assert model == PicrewModel.from_raw(raw_model)
 
     @pytest.mark.asyncio()
-    async def test_save_insert(self, client: AsyncMongoMockClient, model: PicrewModel) -> None:
+    async def test_save_insert(
+        self, client: AsyncMongoMockClient, model: PicrewModel
+    ) -> None:
         model.id = None
         await model.save(client.db)
 
@@ -139,7 +146,9 @@ class TestPicrewModel:
         assert result["add_date"] == new_add_date
 
     @pytest.mark.asyncio()
-    async def test_get_random_unposted(self, client: AsyncMongoMockClient, faker: Faker, user) -> None:
+    async def test_get_random_unposted(
+        self, client: AsyncMongoMockClient, faker: Faker, user
+    ) -> None:
         data = [self.create(faker, True, user).to_raw() for _ in range(6)]
         ids = set()
 
@@ -155,7 +164,9 @@ class TestPicrewModel:
         assert all(i.id in ids for i in results)
 
     @pytest.mark.asyncio()
-    async def test_count_posted_and_not_posted(self, client: AsyncMongoMockClient) -> None:
+    async def test_count_posted_and_not_posted(
+        self, client: AsyncMongoMockClient
+    ) -> None:
         documents = [{"was_posted": True} for _ in range(5)]
         documents.extend({"was_posted": False} for _ in range(3))
 

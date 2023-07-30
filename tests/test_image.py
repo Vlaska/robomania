@@ -55,7 +55,6 @@ def test_change_image_format(img: image.Image) -> None:
     assert img.image.read(4) == b"\xff\xd8\xff\xe0"
 
 
-@pytest.mark.xfail(reason="Not implemented")
 def test_change_image_format_changes_format_in_name(img: image.Image) -> None:
     img._change_image_format()
 

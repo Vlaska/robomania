@@ -5,5 +5,5 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def set_seed() -> None:
+def _set_seed() -> None:
     np.random.seed(0)

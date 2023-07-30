@@ -6,7 +6,6 @@ from pathlib import Path
 import disnake
 from pydantic import (
     AnyHttpUrl,
-    Extra,
     Field,
     FieldValidationInfo,
     MongoDsn,
@@ -16,8 +15,10 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class BasicSettings(BaseSettings, extra=Extra.allow):
+class BasicSettings(BaseSettings):
     debug: bool = Field(default=False)
+
+    model_config = SettingsConfigDict(extra="allow")
 
 
 class Settings(BasicSettings):
