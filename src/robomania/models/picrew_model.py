@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Awaitable, Coroutine, Protocol, cast
+from typing import TYPE_CHECKING, Any, Awaitable, Coroutine, Mapping, Protocol, cast
 
 import disnake
 from attrs import asdict, define, field
@@ -80,7 +80,7 @@ class PicrewModel(Model):
 
         return out
 
-    async def set_to_posted(self, db: Database) -> None:
+    async def set_to_posted(self, db: AsyncIOMotorDatabase) -> None:
         if self.was_posted:
             return
 
@@ -88,13 +88,13 @@ class PicrewModel(Model):
         await self.save(db)
 
     @classmethod
-    def from_raw(cls, post: dict[str, Any]) -> PicrewModel:
-        post = post.copy()
+    def from_raw(cls, post: Mapping[str, Any]) -> PicrewModel:
+        post = {**post}
         _id = post.pop("_id", None)
 
         return cls(id=_id, **post)
 
-    async def save(self, db: Database) -> None:
+    async def save(self, db: AsyncIOMotorDatabase) -> None:
         col = db.picrew
         document = self.to_raw()
 
@@ -123,25 +123,28 @@ class PicrewModel(Model):
         out = []
 
         async for i in aggregator:
-            user_id = i["user"]
+            data = {**i}
+            user_id = data["user"]
             if user_id is not None and (user := bot.get_user(user_id)) is None:
                 try:
-                    user = await bot.fetch_user(i["user"])
+                    user = await bot.fetch_user(data["user"])
                 except disnake.NotFound:
                     user = None
             else:
                 user = None
 
-            i["user"] = user
+            data["user"] = user
 
-            model = cls.from_raw(i)
+            model = cls.from_raw(data)
 
             out.append(model)
 
         return out
 
     @classmethod
-    async def get_random_unposted(cls, db: Database, count: int) -> list[PicrewModel]:
+    async def get_random_unposted(
+        cls, db: AsyncIOMotorDatabase, count: int
+    ) -> list[PicrewModel]:
         pipeline: list[dict] = [
             {"$match": {"was_posted": False}},
             {"$sample": {"size": count}},
@@ -150,13 +153,17 @@ class PicrewModel(Model):
         return await cls.get(db, pipeline)
 
     @classmethod
-    async def get_random(cls, db: Database, count: int) -> list[PicrewModel]:
+    async def get_random(
+        cls, db: AsyncIOMotorDatabase, count: int
+    ) -> list[PicrewModel]:
         pipeline: list[dict] = [{"$sample": {"size": count}}]
 
         return await cls.get(db, pipeline)
 
     @classmethod
-    async def count_posted_and_not_posted(cls, db: Database) -> PicrewCountByPostStatus:
+    async def count_posted_and_not_posted(
+        cls, db: AsyncIOMotorDatabase
+    ) -> PicrewCountByPostStatus:
         pipeline: list[dict[str, Any]] = [
             {"$group": {"_id": "$was_posted", "count": {"$sum": 1}}},
             {"$project": {"_id": 0, "posted": "$_id", "count": 1}},

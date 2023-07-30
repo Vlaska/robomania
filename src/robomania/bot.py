@@ -10,9 +10,8 @@ from typing import Generator, Protocol, cast
 import disnake
 import pytz
 from disnake.ext import commands
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo import MongoClient
-from pymongo.database import Database
 
 from robomania.config import Settings, settings
 from robomania.locale import DefaultLocale
@@ -60,7 +59,7 @@ class Robomania(commands.Bot):
     def blocking_db(self) -> Generator[MongoClient, None, None]:
         if self.__blocking_db_counter == 0:
             async_client = self.client
-            self.client = MongoClient(str(settings.db_url))
+            self.client = MongoClient(str(settings.db_url))  # type: ignore
 
         self.__blocking_db_counter += 1
         try:
@@ -82,7 +81,7 @@ class Robomania(commands.Bot):
         await self.healthcheck_client.shutdown()
         await super().close()
 
-    def get_db(self, name: str) -> Database:
+    def get_db(self, name: str) -> AsyncIOMotorDatabase:
         if settings.environment:
             name = f"{name}-{settings.environment}"
         return self.client[name]

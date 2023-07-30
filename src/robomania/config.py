@@ -34,10 +34,8 @@ class Settings(BasicSettings):
 
     @field_validator("db_url")
     @classmethod
-    def validate_url(
-        cls, v: str | None, info: FieldValidationInfo
-    ) -> MongoDsn:  # noqa: N805
-        if isinstance(v, MongoDsn):
+    def validate_url(cls, v: str | None, info: FieldValidationInfo) -> str:
+        if v:
             return v
 
         username = info.data["db_username"]
@@ -49,18 +47,11 @@ class Settings(BasicSettings):
 
         if port:
             protocol = "mongodb"
+            port = f":{port}"
         else:
             protocol = "mongodb+srv"
 
-        return MongoDsn.build(
-            scheme=protocol,
-            user=username,
-            password=password.get_secret_value(),
-            host=host,
-            port=port,
-            path=auth_db,
-            query="retryWrites=true&w=majority",
-        )
+        return f"{protocol}://{username}:{password}@{host}{port}/{auth_db}?retryWrites=true&w=majority"
 
     scraper_user_agent: str | None = None
     facebook_cookies_path: Path
@@ -82,7 +73,7 @@ class Settings(BasicSettings):
         "robomania.cogs.info",
     )
 
-    default_locale = disnake.Locale.en_GB
+    default_locale: disnake.Locale = disnake.Locale.en_GB
 
     available_locales: tuple[str, ...] = (
         "pl",

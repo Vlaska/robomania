@@ -4,4 +4,4 @@ from robomania.config import settings
 
 
 def get_asset_url(name: str, type: str) -> str:
-    return urljoin(settings.assets_base_url, f"{type}s/{name}")
+    return urljoin(str(settings.assets_base_url), f"{type}s/{name}")

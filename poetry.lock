@@ -978,6 +978,24 @@ srv = ["pymongo[srv] (>=4.4,<5)"]
 zstd = ["pymongo[zstd] (>=4.4,<5)"]
 
 [[package]]
+name = "motor-types"
+version = "1.0.0b2"
+description = "Python stubs for Motor, a Non-Blocking MongoDB driver for Python's Tornado and AsyncIO based applications."
+optional = false
+python-versions = ">=3.8.0,<4.0"
+files = [
+    {file = "motor_types-1.0.0b2-py3-none-any.whl", hash = "sha256:f02e57c5ba957020ee2e8ea147fde1c847d753f8481f89114dafdf54b5577b91"},
+    {file = "motor_types-1.0.0b2.tar.gz", hash = "sha256:b00745e6562a4bdfd41b4de1e4d9221b3e3bd3f755458e4cb758b44a7a1dd8d4"},
+]
+
+[package.dependencies]
+pymongo = ">=4.3.0"
+typing-extensions = ">=4.0.0"
+
+[package.extras]
+motor = ["dnspython (>=2.3.0)", "motor (>=3.0.0)"]
+
+[[package]]
 name = "multidict"
 version = "6.0.4"
 description = "multidict implementation"
@@ -2443,4 +2461,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "e5ed8e8228d06532f929a635f0a391e0b4aa45dfd2f4820b1480d4bfb49b04ec"
+content-hash = "ad3f991b11685629007b8b0859b1211b1dd8ba4e0393fa0d5af21457dbecc594"

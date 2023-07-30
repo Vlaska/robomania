@@ -4,6 +4,7 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Protocol, Type, TypeVar, runtime_checkable
 
 if TYPE_CHECKING:
+    from motor.motor_asyncio import AsyncIOMotorDatabase
     from pymongo.database import Database
 
 
@@ -12,7 +13,7 @@ TModel = TypeVar("TModel", bound="Model")
 
 class Model(Protocol):
     @abstractmethod
-    async def save(self, db: Database) -> None:
+    async def save(self, db: AsyncIOMotorDatabase) -> None:
         raise NotImplementedError
 
     @classmethod

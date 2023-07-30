@@ -98,7 +98,8 @@ class Poll(commands.Cog):
         selected_theme = emotes[theme]
         separated_options = options.split("|")
         with self.bot.localize(
-            ("COMMUNITY" in inter.guild.features and inter.guild_locale) or inter.locale
+            (inter.guild and "COMMUNITY" in inter.guild.features and inter.guild_locale)
+            or inter.locale
         ) as tr:
             if len(separated_options) > len(selected_theme):
                 logger.info(
