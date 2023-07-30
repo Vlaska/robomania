@@ -2,18 +2,18 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Any
 
 import disnake
 from pydantic import (
     AnyHttpUrl,
-    BaseSettings,
     Extra,
     Field,
+    FieldValidationInfo,
     MongoDsn,
     SecretStr,
-    validator,
+    field_validator,
 )
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class BasicSettings(BaseSettings, extra=Extra.allow):
@@ -32,19 +32,20 @@ class Settings(BasicSettings):
 
     db_url: MongoDsn | None = None
 
-    @validator("db_url")
+    @field_validator("db_url")
+    @classmethod
     def validate_url(
-        cls, v: str | None, values: dict[str, Any]
+        cls, v: str | None, info: FieldValidationInfo
     ) -> MongoDsn:  # noqa: N805
         if isinstance(v, MongoDsn):
             return v
 
-        username = values["db_username"]
-        password: SecretStr = values["db_password"]
+        username = info.data["db_username"]
+        password: SecretStr = info.data["db_password"]
 
-        host = values["db_host"]
-        port = values["db_port"]
-        auth_db = f"/{values['db_auth_db']}"
+        host = info.data["db_host"]
+        port = info.data["db_port"]
+        auth_db = f"/{info.data['db_auth_db']}"
 
         if port:
             protocol = "mongodb"
@@ -88,10 +89,7 @@ class Settings(BasicSettings):
         "en_GB",
         "en_US",
     )
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
 settings: Settings
