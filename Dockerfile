@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM python:3.10-buster AS build
+FROM python:3.11-buster AS build
 
 WORKDIR /tmp/build
 RUN pip install poetry

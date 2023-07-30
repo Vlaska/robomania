@@ -5,7 +5,7 @@ description = "Bot for discord server"
 authors = ["June Gierada <vlaska8888@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 disnake = "^2.5.2"
 aiohttp = "^3.8.1"
 motor = {extras = ["srv"], version = "^3.0.0"}
@@ -17,11 +17,12 @@ typing-extensions = "^4.3.0"
 attrs = "^22.1.0"
 validators = "^0.20.0"
 pytz = "^2022.2.1"
-pydantic = "^1.10.2"
+pydantic = "^2"
 Arpeggio = "^2.0.0"
 numpy = "^1.24.1"
 httpx = "^0.23.3"
 requests = "^2.31.0"
+fastapi = {version = "^0.100", extras = ["all"]}
 
 [tool.poetry.group.dev.dependencies]
 isort = "*"
@@ -58,7 +59,7 @@ asyncio_mode = "strict"
 addopts = "--cov=src/robomania --cov-report html --cov-report xml:cov.xml"
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 show_error_codes = true
 ignore_missing_imports = true
 plugins = [
@@ -70,7 +71,7 @@ ignore_missing_imports_per_module = true
 
 [tool.black]
 line-length = 88
-target-version = ["py310"]
+target-version = ["py311"]
 
 [tool.isort]
 profile = "black"
