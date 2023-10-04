@@ -9,7 +9,7 @@ python = "^3.10"
 disnake = "^2.5.2"
 aiohttp = "^3.8.1"
 motor = {extras = ["srv"], version = "^3.0.0"}
-Pillow = "^9.2.0"
+Pillow = "^10.0.1"
 pytesseract = "^0.3.10"
 python-dotenv = "^0.21.0"
 click = "^8.1.3"
