@@ -7,7 +7,7 @@ authors = ["June Gierada <vlaska8888@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.10"
 disnake = "^2.5.2"
-aiohttp = "^3.8.1"
+aiohttp = "^3.8.5"
 motor = {extras = ["srv"], version = "^3.0.0"}
 Pillow = "^9.2.0"
 pytesseract = "^0.3.10"
